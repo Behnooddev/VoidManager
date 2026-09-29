@@ -22,3 +22,7 @@ Three layers: encrypted package, session bootstrapped by a QR code carrying only
 - A transport is required to complete a share. The first one is an open decision.
 - Custom-scheme links can be claimed by other apps; the design assumes the link is observable.
 - Protocol version 1 is not frozen until implemented and tested.
+
+## Amendment (2026-09-29)
+
+The developer selected two user-selectable share methods: QR code and Nearby. The QR method uses the local network as its transport; the Nearby method uses Nearby Connections and requires Google Play services, so it is optional and hidden where unavailable. The decision on the first transport is closed. Branded QR rules are in `docs/qr-branding.md`.

@@ -9,6 +9,21 @@ Status: Proposed. Share protocol version 1 is a draft; it is not frozen until im
 - The recipient reviews before anything is stored, and decides between create, update and merge.
 - No VoidManager server. No account.
 
+## Share methods
+
+The sender picks the method on the share screen, after the review step. Two methods are supported.
+
+| Method | How the devices connect | Availability |
+| --- | --- | --- |
+| QR code | The sender shows a QR code and the recipient scans it. The data moves over the local network: the same Wi-Fi network, or a hotspot started on either phone. | Android and desktop. Does not need Google Play services. |
+| Nearby | The devices find each other through Nearby Connections. No QR code is involved. Both screens show a confirmation code that the two users compare before the sender approves. | Android only, and only on devices with Google Play services. The option is hidden on other devices, with a short explanation. |
+
+Both methods use the same package format, the same approval step and the same validation on receive. A method consists of a bootstrap (how the recipient learns how to connect) and a `ShareTransport` (how bytes move). Adding a method later does not change the package or the incoming share screen.
+
+Nearby permissions are requested when the user starts a Nearby share, not at install or first launch. The permission list is taken from the current Nearby Connections documentation when the method is implemented.
+
+The QR code is rendered with the VoidManager logo in the centre. The rules for that are in [qr-branding.md](qr-branding.md).
+
 ## Layers
 
 1. Package: a versioned, encrypted container holding the selected data.
@@ -32,7 +47,7 @@ The package is compressed, then encrypted with AEAD under the session key. Integ
 
 ## Session (v1)
 
-The QR code carries:
+In the QR method the QR code carries:
 
 - protocol version
 - an ephemeral public key of the sender
@@ -64,13 +79,14 @@ The exact HPKE mode and encoding are confirmed in a Phase 8 spike against the Ti
 
 ## Transports
 
-| Transport | Notes | Status |
+| Transport | Used by | Notes |
 | --- | --- | --- |
-| Local network / hotspot | Sender listens on an ephemeral port; works without Google services; needs both devices on one network | Candidate first transport |
-| Nearby Connections | Good proximity UX; depends on Google Play services | Optional, not required |
-| Encrypted share file | Package written to a file with a passphrase-derived key and sent through any channel the user chooses | Candidate; matches the user-controlled transfer goal |
+| Local network | QR method | The sender listens on an ephemeral port on its Wi-Fi or hotspot address, which is placed in the transport descriptor. Both devices must be on the same network. When the address is not reachable, the screen tells the user to start a hotspot on one of the phones. |
+| Nearby Connections | Nearby method | Discovery, connection and byte stream come from Nearby Connections. Its own authentication is not relied on: the session below runs on top of it and produces the confirmation code. |
 
-The first transport is an open decision. All transports implement the same `ShareTransport` interface, so sessions and packages do not change.
+In the Nearby method there is no QR code and therefore no token. The pre-shared key is absent and the ephemeral key exchange is authenticated by the users comparing the confirmation code on both screens, which is derived from the handshake transcript. The sender cannot approve until the code is shown.
+
+An encrypted share file (a package sent through any channel the user chooses) stays a possible later method. It is not part of version 1.
 
 ## Incoming Share screen
 

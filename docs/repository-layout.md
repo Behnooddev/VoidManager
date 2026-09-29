@@ -5,8 +5,8 @@ Status: Proposed. Directories are created when the phase that needs them starts.
 ```
 VoidManager/
   README.md
-  LICENSE                     pending decision
-  SECURITY.md                 pending reporting channel
+  LICENSE                     MIT
+  SECURITY.md
   CONTRIBUTING.md
   CHANGELOG.md
   settings.gradle.kts
@@ -16,10 +16,6 @@ VoidManager/
   gradle/
     libs.versions.toml        pinned dependency versions
     verification-metadata.xml dependency checksum verification
-  build-logic/                convention plugins (kmp-library, compose, detekt, ...)
-  config/
-    detekt/
-    lint/
   app/
     android/
     desktop/
@@ -54,8 +50,9 @@ VoidManager/
     adr/
     security/
   assets/
-    brand/
+    brand/                    logo, banner and icon masters, see assets/brand/README.md
     screenshots/
+  handoffs/                   one handoff document per phase
   scripts/
   website/                    Phase 10
   .github/
@@ -66,6 +63,7 @@ VoidManager/
 
 Notes:
 
+- Convention plugins (`build-logic`) are not used yet. Each module has its own build script until the duplication justifies them.
 - Module names may change in Phase 1 if a split turns out to add cost without value.
 - `core:testing` holds synthetic fixtures only. No real personal data is committed anywhere.
 - `assets/screenshots` contains demo data only.

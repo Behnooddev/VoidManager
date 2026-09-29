@@ -2,12 +2,18 @@
 
 Status: Proposed. Workflows are written in Phase 1 and extended per phase.
 
-## Pull request pipeline
+## Current state
+
+The workflow in `.github/workflows/ci.yml` runs: wrapper validation, version consistency, `spotlessCheck`, JVM unit tests of `core:common`, Android debug build with lint, desktop compile, dependency review on pull requests, and a secret scan. It has not run yet; the first run on GitHub is the first verification of the build.
+
+Not in place yet: dependency checksum verification (`gradle/verification-metadata.xml` is generated after the first successful build), release signing, desktop installers, checksums, CodeQL.
+
+## Planned pull request pipeline
 
 1. Gradle wrapper validation.
 2. Dependency verification against `gradle/verification-metadata.xml`.
 3. Formatting check (ktlint through Spotless).
-4. Static analysis (detekt, Android lint) with the project rule set, including the ban on direct logging.
+4. Static analysis: Android lint now. detekt is deferred until a release compatible with the Kotlin version in use is confirmed; the ban on direct logging is enforced by a detekt or lint rule once static analysis is extended.
 5. Unit and repository tests on the JVM.
 6. Android build (debug) and instrumented tests on an emulator for modules that need them.
 7. Desktop build on Linux for every pull request; Windows and macOS builds on release branches.

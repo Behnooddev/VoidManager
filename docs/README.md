@@ -8,17 +8,21 @@
 | [security/key-management.md](security/key-management.md) | Key hierarchy, unlock paths, lock behavior, recovery limits |
 | [security/password-manager.md](security/password-manager.md) | Accounts, secrets, reveal and clipboard handling |
 | [security/threat-model.md](security/threat-model.md) | Assets, adversaries, mitigations, known limits |
-| [sharing.md](sharing.md) | Share package, QR bootstrap, transports, incoming share, merge |
+| [sharing.md](sharing.md) | Share methods, package, session, incoming share, merge |
+| [qr-branding.md](qr-branding.md) | Branded QR codes: logo rules, validation, presentations |
 | [backup-format.md](backup-format.md) | Encrypted backup container and restore rules |
 | [media-storage.md](media-storage.md) | Photo and attachment storage |
+| [design-system.md](design-system.md) | Tokens, components, accessibility rules |
+| [development-setup.md](development-setup.md) | Requirements and commands |
 | [testing.md](testing.md) | Test layers and required coverage |
 | [ci-cd.md](ci-cd.md) | Pipelines, checks, release artifacts |
 | [versioning.md](versioning.md) | Independent version numbers and the compatibility matrix |
 | [migrations.md](migrations.md) | Database, backup and share migration rules |
 | [roadmap.md](roadmap.md) | Phases, exit criteria, sequencing |
 | [repository-layout.md](repository-layout.md) | Planned repository tree |
-| [open-decisions.md](open-decisions.md) | Decisions pending or needing confirmation |
+| [open-decisions.md](open-decisions.md) | Resolved and open decisions |
 | [adr/](adr) | Architecture decision records |
+| [../handoffs](../handoffs) | One handoff document per phase |
 
 Documents are updated in the same change that alters the behavior they describe.
 

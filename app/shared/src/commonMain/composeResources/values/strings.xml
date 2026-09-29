@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="nav_home">Home</string>
+  <string name="nav_people">People</string>
+  <string name="nav_personal">Personal</string>
+  <string name="nav_settings">Settings</string>
+  <string name="placeholder_title">Not available yet</string>
+  <string name="placeholder_message">This version contains the app foundation only. This section is built in a later release.</string>
+</resources>

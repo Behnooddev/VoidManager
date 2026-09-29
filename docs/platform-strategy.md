@@ -5,12 +5,13 @@ Status: Proposed.
 ## Android (primary)
 
 - Kotlin, Compose Multiplatform UI, single-activity app.
-- Proposed `minSdk` 26. Rationale: `java.time` without desugaring, mature Android Keystore behavior, and StrongBox where present. Devices below API 26 are not supported. Pending confirmation.
+- Proposed `minSdk` 26. Rationale: `java.time` without desugaring, mature Android Keystore behavior, and StrongBox where present. Devices below API 26 are not supported. Confirmed as the default on 2026-09-29.
 - `targetSdk` follows the latest stable API level and is set in Phase 1.
 - Must run on devices without Google Play services. No hard dependency on Google Play services libraries anywhere in core flows.
 - Photo import uses the system photo picker, so the app requests no broad storage permission.
 - Sensitive screens set `FLAG_SECURE`. The recent-apps thumbnail is hidden while locked.
 - Clipboard: secrets are marked sensitive with `ClipDescription.EXTRA_IS_SENSITIVE` on API 33 and above, and cleared after a timeout with `ClipboardManager.clearPrimaryClip` on API 28 and above. On older versions the app cannot guarantee clearing and the settings screen says so.
+- Sharing methods: QR code (local network transport) and Nearby Connections. Nearby is offered only when Google Play services are present.
 - Deep link: custom scheme `voidmanager://` declared as an intent filter. See `sharing.md`.
 - Biometric unlock: AndroidX Biometric with a Keystore key that requires user authentication.
 - Distribution artifacts: signed APK and AAB. Store publication is out of scope for Phase 0.

@@ -33,6 +33,15 @@ Person creation and editing, quick add, detailed profile, custom fields, multipl
 
 All test data is synthetic. Phone numbers use reserved fictional ranges, card numbers use published test numbers, no real names, addresses or documents.
 
+## QR branding tests (Phase 8)
+
+- The encoder matrix is identical with and without a logo; only the rendered image differs.
+- A branded QR decodes to the exact payload at full size, half size, quarter size and with a light blur, in both presentations.
+- The logo never covers finder patterns, separators, timing patterns or format and version information.
+- Oversized logos are reduced step by step, and a plain QR is used when the floor size still fails.
+- A QR that fails validation is never displayed.
+- The QR payload parses to the bootstrap fields only.
+
 ## Things that cannot be verified in every environment
 
 Keystore-backed behavior, biometrics, deep link dispatch and clipboard behavior require an Android emulator or device. Each phase report states which tests ran where.
