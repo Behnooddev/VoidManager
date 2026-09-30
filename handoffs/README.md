@@ -6,6 +6,7 @@ Each phase ends with a handoff document. It records what the phase delivered, wh
 | --- | --- |
 | 0 | [phase-0.md](phase-0.md) |
 | 1 | [phase-1.md](phase-1.md) |
+| 2 | [phase-2.md](phase-2.md) |
 
 ## Status labels
 

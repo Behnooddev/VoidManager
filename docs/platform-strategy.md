@@ -25,7 +25,7 @@ Status: Proposed.
   - Secure storage of the device-bound key: Windows Credential Manager or DPAPI, macOS Keychain, Linux Secret Service. Accessed from JVM through a native-access library; the choice is made when the desktop phase starts.
   - Unlock: master password. Biometric unlock on desktop is not planned initially.
   - Protocol handler registration for `voidmanager://` is done by the installer per operating system. Behavior of the packaging tooling for this must be verified before the desktop phase.
-- Gate: desktop ships only after full-database encryption is validated on the JVM (see ADR-0002). The search index lives inside the database, so an unencrypted desktop database would leave indexed names and phone numbers in plaintext on disk.
+- Gate: desktop ships only after full-database encryption is validated on Windows and macOS. Linux validation is done (see ADR-0002). The search index lives inside the database, so an unencrypted desktop database would leave indexed names and phone numbers in plaintext on disk.
 
 ## iOS
 

@@ -18,7 +18,7 @@ If dependency resolution fails because a repository is unreachable from your net
 | Run the desktop app | `./gradlew :app:desktop:run` |
 | Build the Android debug APK | `./gradlew :app:android:assembleDebug` |
 | Android lint | `./gradlew :app:android:lintDebug` |
-| Unit tests (shared logic) | `./gradlew :core:common:jvmTest` |
+| Unit tests (shared logic) | `./gradlew :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest` |
 | Check formatting | `./gradlew spotlessCheck` |
 | Apply formatting | `./gradlew spotlessApply` |
 | Version consistency | `bash scripts/check-version-consistency.sh` |

@@ -1,0 +1,57 @@
+CREATE TABLE entity (
+  id TEXT NOT NULL PRIMARY KEY,
+  kind INTEGER NOT NULL CHECK (kind IN (0, 1)),
+  display_name TEXT NOT NULL,
+  sort_key TEXT NOT NULL,
+  is_favorite INTEGER NOT NULL DEFAULT 0 CHECK (is_favorite IN (0, 1)),
+  primary_photo_id TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted_at INTEGER
+);
+
+CREATE UNIQUE INDEX entity_single_self ON entity (kind) WHERE kind = 1;
+CREATE INDEX entity_list ON entity (deleted_at, sort_key);
+
+insert:
+INSERT INTO entity (id, kind, display_name, sort_key, is_favorite, primary_photo_id, created_at, updated_at, deleted_at)
+VALUES (:id, :kind, :displayName, :sortKey, 0, NULL, :now, :now, NULL);
+
+selectById:
+SELECT * FROM entity WHERE id = :id;
+
+selectActive:
+SELECT * FROM entity WHERE deleted_at IS NULL AND kind = 0 ORDER BY sort_key, id;
+
+selectFavorites:
+SELECT * FROM entity WHERE deleted_at IS NULL AND kind = 0 AND is_favorite = 1 ORDER BY sort_key, id;
+
+selectTrashed:
+SELECT * FROM entity WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC, id;
+
+selectSelf:
+SELECT * FROM entity WHERE kind = 1 LIMIT 1;
+
+rename:
+UPDATE entity SET display_name = :displayName, sort_key = :sortKey, updated_at = :now WHERE id = :id;
+
+setFavorite:
+UPDATE entity SET is_favorite = :favorite, updated_at = :now WHERE id = :id;
+
+setPrimaryPhoto:
+UPDATE entity SET primary_photo_id = :photoId, updated_at = :now WHERE id = :id;
+
+touch:
+UPDATE entity SET updated_at = :now WHERE id = :id;
+
+moveToTrash:
+UPDATE entity SET deleted_at = :now, updated_at = :now WHERE id = :id AND deleted_at IS NULL AND kind = 0;
+
+restore:
+UPDATE entity SET deleted_at = NULL, updated_at = :now WHERE id = :id AND deleted_at IS NOT NULL;
+
+purge:
+DELETE FROM entity WHERE id = :id AND deleted_at IS NOT NULL;
+
+countActive:
+SELECT count(*) FROM entity WHERE deleted_at IS NULL AND kind = 0;

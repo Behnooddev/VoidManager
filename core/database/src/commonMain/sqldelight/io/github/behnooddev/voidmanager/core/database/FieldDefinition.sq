@@ -1,0 +1,58 @@
+CREATE TABLE field_definition (
+  id TEXT NOT NULL PRIMARY KEY,
+  system_key TEXT UNIQUE,
+  section INTEGER NOT NULL,
+  data_type INTEGER NOT NULL,
+  default_label TEXT NOT NULL,
+  default_sensitivity INTEGER NOT NULL CHECK (default_sensitivity BETWEEN 0 AND 3),
+  allows_multiple INTEGER NOT NULL CHECK (allows_multiple IN (0, 1)),
+  is_composite INTEGER NOT NULL CHECK (is_composite IN (0, 1)),
+  is_user_defined INTEGER NOT NULL CHECK (is_user_defined IN (0, 1)),
+  schema_version INTEGER NOT NULL DEFAULT 1,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_hidden INTEGER NOT NULL DEFAULT 0 CHECK (is_hidden IN (0, 1)),
+  label_override TEXT,
+  CHECK (
+    (is_user_defined = 1 AND system_key IS NULL)
+    OR (is_user_defined = 0 AND system_key IS NOT NULL)
+  )
+);
+
+CREATE TABLE field_definition_part (
+  definition_id TEXT NOT NULL REFERENCES field_definition (id) ON DELETE CASCADE,
+  part_key TEXT NOT NULL,
+  sensitivity INTEGER NOT NULL CHECK (sensitivity BETWEEN 0 AND 3),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (definition_id, part_key)
+);
+
+upsertBuiltIn:
+INSERT INTO field_definition (
+  id, system_key, section, data_type, default_label, default_sensitivity,
+  allows_multiple, is_composite, is_user_defined, schema_version, sort_order
+) VALUES (:id, :systemKey, :section, :dataType, :defaultLabel, :defaultSensitivity,
+  :allowsMultiple, :isComposite, 0, :schemaVersion, :sortOrder)
+ON CONFLICT (id) DO UPDATE SET
+  section = excluded.section,
+  data_type = excluded.data_type,
+  default_label = excluded.default_label,
+  default_sensitivity = excluded.default_sensitivity,
+  allows_multiple = excluded.allows_multiple,
+  is_composite = excluded.is_composite,
+  schema_version = excluded.schema_version;
+
+deleteParts:
+DELETE FROM field_definition_part WHERE definition_id = :definitionId;
+
+insertPart:
+INSERT INTO field_definition_part (definition_id, part_key, sensitivity, sort_order)
+VALUES (:definitionId, :partKey, :sensitivity, :sortOrder);
+
+selectAll:
+SELECT * FROM field_definition ORDER BY sort_order, id;
+
+selectById:
+SELECT * FROM field_definition WHERE id = :id;
+
+selectPartsFor:
+SELECT * FROM field_definition_part WHERE definition_id = :definitionId ORDER BY sort_order, part_key;

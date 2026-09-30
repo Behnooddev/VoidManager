@@ -23,12 +23,16 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
+      - name: Make the wrapper executable
+        run: chmod +x ./gradlew
       - name: Version consistency
         run: bash ./scripts/check-version-consistency.sh
       - name: Format check
         run: ./gradlew spotlessCheck
       - name: Unit tests
-        run: ./gradlew :core:common:jvmTest
+        run: ./gradlew :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest
+      - name: Build data modules
+        run: ./gradlew :core:model:assemble :core:database:assemble :core:data:assemble
       - name: Android debug build and lint
         run: ./gradlew :app:android:assembleDebug :app:android:lintDebug
       - name: Desktop compile

@@ -41,7 +41,7 @@ Dependency rule: arrows point downward only. `core:model` depends on nothing. `f
 
 - Kotlin coroutines and Flow.
 - Argon2id, bulk AEAD, image decoding and export generation run on a dedicated background dispatcher, never on the main thread.
-- Database access goes through repositories that expose suspend functions and Flows.
+- Repositories are blocking in Phase 2. Callers dispatch them off the main thread. Suspend and Flow wrappers are added with the first feature that needs them.
 
 ## Error model
 

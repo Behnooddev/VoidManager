@@ -30,6 +30,9 @@ rootProject.name = "VoidManager"
 
 include(":core:common")
 include(":core:designsystem")
+include(":core:model")
+include(":core:database")
+include(":core:data")
 include(":app:shared")
 include(":app:android")
 include(":app:desktop")

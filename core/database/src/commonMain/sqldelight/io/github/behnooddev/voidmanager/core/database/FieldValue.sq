@@ -1,0 +1,107 @@
+CREATE TABLE field_value (
+  id TEXT NOT NULL PRIMARY KEY,
+  entity_id TEXT NOT NULL REFERENCES entity (id) ON DELETE CASCADE,
+  definition_id TEXT NOT NULL REFERENCES field_definition (id),
+  label TEXT,
+  value_plain TEXT,
+  value_cipher BLOB,
+  note_plain TEXT,
+  note_cipher BLOB,
+  normalized TEXT,
+  is_primary INTEGER NOT NULL DEFAULT 0 CHECK (is_primary IN (0, 1)),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  sensitivity INTEGER NOT NULL CHECK (sensitivity BETWEEN 0 AND 3),
+  sharing_policy INTEGER NOT NULL DEFAULT 0 CHECK (sharing_policy BETWEEN 0 AND 3),
+  metadata TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  CHECK (value_plain IS NULL OR value_cipher IS NULL),
+  CHECK (note_plain IS NULL OR note_cipher IS NULL),
+  CHECK (sensitivity < 2 OR (value_plain IS NULL AND note_plain IS NULL AND normalized IS NULL)),
+  CHECK (sensitivity >= 2 OR (value_cipher IS NULL AND note_cipher IS NULL))
+);
+
+CREATE INDEX field_value_entity ON field_value (entity_id, definition_id, sort_order);
+
+CREATE TABLE field_part (
+  field_value_id TEXT NOT NULL REFERENCES field_value (id) ON DELETE CASCADE,
+  part_key TEXT NOT NULL,
+  value_plain TEXT,
+  value_cipher BLOB,
+  normalized TEXT,
+  sensitivity INTEGER NOT NULL CHECK (sensitivity BETWEEN 0 AND 3),
+  PRIMARY KEY (field_value_id, part_key),
+  CHECK (value_plain IS NULL OR value_cipher IS NULL),
+  CHECK (sensitivity < 2 OR (value_plain IS NULL AND normalized IS NULL)),
+  CHECK (sensitivity >= 2 OR value_cipher IS NULL)
+);
+
+insertValue:
+INSERT INTO field_value (
+  id, entity_id, definition_id, label, value_plain, value_cipher, note_plain, note_cipher, normalized,
+  is_primary, sort_order, sensitivity, sharing_policy, metadata, created_at, updated_at
+) VALUES (
+  :id, :entityId, :definitionId, :label, :valuePlain, :valueCipher, :notePlain, :noteCipher, :normalized,
+  :isPrimary, :sortOrder, :sensitivity, :sharingPolicy, :metadata, :now, :now
+);
+
+insertPart:
+INSERT INTO field_part (field_value_id, part_key, value_plain, value_cipher, normalized, sensitivity)
+VALUES (:fieldValueId, :partKey, :valuePlain, :valueCipher, :normalized, :sensitivity);
+
+selectValueById:
+SELECT * FROM field_value WHERE id = :id;
+
+selectValuesForEntity:
+SELECT * FROM field_value WHERE entity_id = :entityId ORDER BY definition_id, sort_order, created_at, id;
+
+selectPartsForEntity:
+SELECT p.* FROM field_part p JOIN field_value v ON v.id = p.field_value_id WHERE v.entity_id = :entityId ORDER BY p.field_value_id, p.part_key;
+
+selectPartsForValue:
+SELECT * FROM field_part WHERE field_value_id = :fieldValueId ORDER BY part_key;
+
+clearPrimary:
+UPDATE field_value SET is_primary = 0 WHERE entity_id = :entityId AND definition_id = :definitionId AND id <> :exceptId AND is_primary = 1;
+
+deleteParts:
+DELETE FROM field_part WHERE field_value_id = :fieldValueId;
+
+deleteValue:
+DELETE FROM field_value WHERE id = :id;
+
+countForDefinition:
+SELECT count(*) FROM field_value WHERE definition_id = :definitionId;
+
+countForDefinitionOnEntity:
+SELECT count(*) FROM field_value WHERE entity_id = :entityId AND definition_id = :definitionId;
+
+replaceValue:
+UPDATE field_value SET
+  label = :label,
+  value_plain = :valuePlain,
+  value_cipher = :valueCipher,
+  note_plain = :notePlain,
+  note_cipher = :noteCipher,
+  normalized = :normalized,
+  is_primary = :isPrimary,
+  sort_order = :sortOrder,
+  sensitivity = :sensitivity,
+  sharing_policy = :sharingPolicy,
+  metadata = :metadata,
+  updated_at = :now
+WHERE id = :id;
+
+searchEntities:
+SELECT DISTINCT e.id FROM entity e
+LEFT JOIN field_value v ON v.entity_id = e.id
+LEFT JOIN field_part p ON p.field_value_id = v.id
+WHERE e.deleted_at IS NULL AND e.kind = 0 AND (
+  e.sort_key LIKE :pattern ESCAPE '\'
+  OR v.normalized LIKE :pattern ESCAPE '\'
+  OR p.normalized LIKE :pattern ESCAPE '\'
+  OR v.normalized LIKE :digitPattern ESCAPE '\'
+  OR p.normalized LIKE :digitPattern ESCAPE '\'
+)
+ORDER BY e.sort_key, e.id
+LIMIT :limit;

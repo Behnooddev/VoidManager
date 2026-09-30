@@ -10,6 +10,18 @@ Status: Proposed.
 - Sensitivity is stored per value and enforced in the data layer.
 - Trash, relationships, photos and attachments are part of the model from the first schema version.
 
+## Status
+
+Schema version 1 exists in `core/database/src/commonMain/sqldelight`. The SQL was executed against a real SQLite engine in Phase 2 (constraints, cascades, search queries). Repositories exist in `core:data`. Their tests are written but have not run yet; see `handoffs/phase-2.md`.
+
+Deviations from the first design:
+
+- Search uses `LIKE` over the normalized columns, not FTS5. The dataset is small and `LIKE` keeps the schema simple; FTS5 can be added by a migration if measurements in Phase 9 justify it.
+- `vault_meta` holds the schema version and registry version. `PRAGMA user_version` is not used, so all drivers behave alike.
+- Field definitions carry per-vault overrides (`is_hidden`, `label_override`, `sort_order`) directly, instead of a separate overrides table.
+- A partial unique index allows exactly one `SELF` entity.
+- `relationship` has unique constraints on `(from, to, type)` and on `(pair_id, from)`.
+
 ## Storage
 
 SQLite through SQLDelight, encrypted with SQLCipher. Values of sensitivity level 2 and 3 are additionally encrypted per value with the vault key hierarchy (see `security/key-management.md`). Rationale and open risk for desktop are in ADR-0002.

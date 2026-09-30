@@ -21,7 +21,7 @@
 
 | # | Decision | Notes |
 | --- | --- | --- |
-| 13 | Desktop database encryption approach | Phase 2 spike. Blocks desktop release (ADR-0002) |
+| 13 | Desktop database encryption on Windows and macOS | Approach chosen and verified on Linux (ADR-0002). Windows and macOS runs are still needed before a desktop release |
 | 14 | Backup file extension | `.vmbk` is the working name. Collision check is incomplete (`backup-format.md`) |
 | 15 | XLSX and PDF libraries | Chosen in Phase 7 after a license and Android compatibility review |
 | 16 | Navigation library | Phase 1 uses plain state. Chosen when nested navigation is needed (Phase 3): AndroidX Navigation Compose or Navigation 3 |

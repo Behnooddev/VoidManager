@@ -16,6 +16,18 @@ Status: Proposed.
 | Instrumented (Android) | Keystore, biometric wrapper, deep link intake, clipboard, secure flag | AndroidX test on emulator |
 | Desktop | Window, keyboard and installer smoke tests | JVM tests, manual checklist per release |
 
+## Tests in the repository now
+
+| Module | Tests | Ran where |
+| --- | --- | --- |
+| `core:common` | logging facade | Authoring environment and CI |
+| `core:model` | id generation, field registry, relationship types, masked text | Authoring environment |
+| `core:data` (logic) | text and phone normalization, sensitivity and sharing rules | Authoring environment |
+| `core:database` (pure) | migration planning, key formatting, encryption check | Authoring environment |
+| `core:database` (JVM) | encrypted vault create, reopen, wrong key, newer schema | Written, not run |
+| `core:data` (JVM) | repositories against an encrypted vault | Written, not run |
+| SQL schema | constraints, cascades, all queries | Ran against SQLite in the authoring environment, outside Gradle |
+
 ## Required behavior coverage
 
 Person creation and editing, quick add, detailed profile, custom fields, multiple values, relationships and reciprocals, search including normalization, favorites, tags, trash, restore, permanent deletion, export, import, encryption, backup, restore, password handling, app lock, share package creation, share validation, incoming share, conflict handling, migrations.

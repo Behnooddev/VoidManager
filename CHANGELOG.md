@@ -4,6 +4,25 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-29
+
+### Added
+
+- `core:model`: entities, field values, field registry with sensitivity levels, relationship types, UUIDv7 ids.
+- `core:database`: schema version 1 (SQLDelight), encrypted drivers for Android (SQLCipher) and desktop (SQLCipher-compatible JDBC fork), vault opener with migration planning and a check that the file is encrypted.
+- `core:data`: text and phone normalization, sensitivity and sharing rules, repositories for people, field values, relationships, trash and search, built-in registry seeding.
+- Decision and spike documentation for desktop database encryption.
+
+### Fixed
+
+- CI: the Gradle wrapper is made executable in the workflow; `.gitattributes` added for line endings.
+
+### Compatibility
+
+- Database schema: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.1.0] - 2026-09-29
 
 ### Added

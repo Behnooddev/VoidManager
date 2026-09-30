@@ -1,0 +1,47 @@
+CREATE TABLE relationship_type (
+  id TEXT NOT NULL PRIMARY KEY,
+  label TEXT NOT NULL,
+  reciprocal_type_id TEXT NOT NULL,
+  is_user_defined INTEGER NOT NULL DEFAULT 0 CHECK (is_user_defined IN (0, 1))
+);
+
+CREATE TABLE relationship (
+  id TEXT NOT NULL PRIMARY KEY,
+  pair_id TEXT NOT NULL,
+  from_entity_id TEXT NOT NULL REFERENCES entity (id) ON DELETE CASCADE,
+  to_entity_id TEXT NOT NULL REFERENCES entity (id) ON DELETE CASCADE,
+  type_id TEXT NOT NULL REFERENCES relationship_type (id),
+  note TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  CHECK (from_entity_id <> to_entity_id),
+  UNIQUE (from_entity_id, to_entity_id, type_id),
+  UNIQUE (pair_id, from_entity_id)
+);
+
+CREATE INDEX relationship_from ON relationship (from_entity_id);
+CREATE INDEX relationship_pair ON relationship (pair_id);
+
+upsertType:
+INSERT INTO relationship_type (id, label, reciprocal_type_id, is_user_defined)
+VALUES (:id, :label, :reciprocalTypeId, 0)
+ON CONFLICT (id) DO UPDATE SET label = excluded.label, reciprocal_type_id = excluded.reciprocal_type_id;
+
+selectTypes:
+SELECT * FROM relationship_type ORDER BY label, id;
+
+insert:
+INSERT INTO relationship (id, pair_id, from_entity_id, to_entity_id, type_id, note, created_at, updated_at)
+VALUES (:id, :pairId, :fromEntityId, :toEntityId, :typeId, :note, :now, :now);
+
+selectFrom:
+SELECT * FROM relationship WHERE from_entity_id = :entityId ORDER BY created_at, id;
+
+selectExisting:
+SELECT * FROM relationship WHERE from_entity_id = :fromId AND to_entity_id = :toId AND type_id = :typeId;
+
+selectByPair:
+SELECT * FROM relationship WHERE pair_id = :pairId;
+
+deletePair:
+DELETE FROM relationship WHERE pair_id = :pairId;

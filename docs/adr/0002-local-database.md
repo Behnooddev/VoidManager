@@ -18,9 +18,24 @@ FTS5 provides search over level 0 and 1 normalized text only.
 - Realm and similar object databases: less transparent for migrations and search, larger dependency. Rejected.
 - Plain SQLite with per-field encryption only: cannot protect the search index and level 0 and 1 data at rest. Rejected as the sole mechanism.
 
-## Open risk
+## Spike result (Phase 2, 2026-09-29)
 
-SQLCipher has an Android artifact. For the desktop JVM there is no first-party driver; options include a community JDBC build of SQLCipher or bundling native libraries. A spike in Phase 2 must produce a working, testable, maintainable approach on Windows, Linux and macOS. If none is found, options are to encrypt the database file at rest with an application-level scheme, or to change the search index design so no plaintext index is stored on desktop. Desktop release is blocked until this is resolved.
+The desktop risk was checked with a real database. The `io.github.willena:sqlite-jdbc` artifact (release 3.53.4.0, project `Willena/sqlite-jdbc-crypt`) is a fork of the stock SQLite JDBC driver with the SQLite3 Multiple Ciphers extension. It uses the same `org.sqlite` package, so it replaces the stock driver and works with the SQLDelight JDBC driver.
+
+Checked on Linux, JDK 21, with connection properties `cipher=sqlcipher`, `legacy=4` and `key=x'<64 hex digits>'`:
+
+- the database file does not start with the plain SQLite header and does not contain inserted text;
+- reopening with a different key fails with `SQLITE_NOTADB`;
+- reopening with the right key reads the data;
+- `PRAGMA foreign_keys` set through the connection properties is enforced;
+- FTS5 virtual tables work in an encrypted database.
+
+Findings that shape the code:
+
+- The `hexkey` parameter did not encrypt anything in the properties and URL forms that were tried; the database was created in plain form without an error. The `key=x'...'` form works. The application therefore checks the file header after every open (`EncryptionCheck`) and refuses to continue on a plain file.
+- The stock `org.xerial:sqlite-jdbc` artifact is excluded from every configuration in the root build, because both artifacts contain the same classes.
+
+Not checked: Windows and macOS. The jar bundles their native libraries, but they were not run. Android uses `net.zetetic:sqlcipher-android` and was not run either. The desktop gate in `platform-strategy.md` remains until the Windows and macOS builds are tested on those systems.
 
 ## Consequences
 
