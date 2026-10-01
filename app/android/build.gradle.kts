@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -7,7 +8,7 @@ plugins {
 }
 
 val versionProps =
-    java.util.Properties().apply {
+    Properties().apply {
         rootProject.file("version.properties").inputStream().use { load(it) }
     }
 val appVersionName: String = versionProps.getProperty("versionName")
