@@ -30,9 +30,9 @@ jobs:
       - name: Format check
         run: ./gradlew spotlessCheck
       - name: Unit tests
-        run: ./gradlew :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest
+        run: ./gradlew :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest :core:security:jvmTest :core:crypto:test
       - name: Build data modules
-        run: ./gradlew :core:model:assemble :core:database:assemble :core:data:assemble
+        run: ./gradlew :core:model:assemble :core:database:assemble :core:data:assemble :core:security:assemble :core:crypto:assemble
       - name: Android debug build and lint
         run: ./gradlew :app:android:assembleDebug :app:android:lintDebug
       - name: Desktop compile

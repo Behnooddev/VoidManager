@@ -24,6 +24,9 @@ Status: Proposed.
 | `core:model` | id generation, field registry, relationship types, masked text | Authoring environment |
 | `core:data` (logic) | text and phone normalization, sensitivity and sharing rules | Authoring environment |
 | `core:database` (pure) | migration planning, key formatting, encryption check | Authoring environment |
+| `core:crypto` | Argon2id, HKDF and AES-GCM against published vectors; key file; unlock, lock, password change, device unlock; tampering | Authoring environment (39 tests) |
+| `core:security` | password policy, auto-lock, re-authentication window, reveal timer | Authoring environment (20 tests) |
+| `core:crypto` integration | Key hierarchy with the encrypted database and repositories | Written, not run |
 | `core:database` (JVM) | encrypted vault create, reopen, wrong key, newer schema | Written, not run |
 | `core:data` (JVM) | repositories against an encrypted vault | Written, not run |
 | SQL schema | constraints, cascades, all queries | Ran against SQLite in the authoring environment, outside Gradle |

@@ -12,7 +12,7 @@ Repository: https://github.com/Behnooddev/VoidManager
 
 ## Status
 
-Phase 2 (data layer). The repository has an application shell, a design system, and a data layer: schema, encrypted database drivers and repositories. The screens do not use them yet, and the encryption of stored values (Phase 3) is not implemented. There are no features visible to a user yet. `docs/` describes the intended design; none of it is implemented unless a document says so, and `handoffs/` records what each phase delivered and verified.
+Phase 3a (security foundation). The repository has an application shell, a design system, a data layer (schema, encrypted database drivers, repositories) and the key management and encryption code. The screens do not use them yet: there is no setup or unlock screen. There are no features visible to a user yet. `docs/` describes the intended design; none of it is implemented unless a document says so, and `handoffs/` records what each phase delivered and verified.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ JDK 17 or newer and the Android SDK. See [docs/development-setup.md](docs/develo
 ```
 ./gradlew :app:desktop:run
 ./gradlew :app:android:assembleDebug
-./gradlew :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest
+./gradlew :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest :core:security:jvmTest :core:crypto:test
 ./gradlew spotlessCheck
 ```
 

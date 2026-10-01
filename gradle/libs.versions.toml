@@ -8,6 +8,7 @@ sqldelight = "2.4.0"
 sqlcipher-android = "4.6.1"
 androidx-sqlite = "2.4.0"
 willena-sqlite-jdbc = "3.53.4.0"
+bouncycastle = "1.86"
 spotless = "7.0.4"
 ktlint = "1.5.0"
 android-compileSdk = "36"
@@ -24,6 +25,7 @@ sqldelight-jvm-driver = { module = "app.cash.sqldelight:sqlite-driver", version.
 sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-38-dialect", version.ref = "sqldelight" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher-android" }
 androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "androidx-sqlite" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 willena-sqlite-jdbc = { module = "io.github.willena:sqlite-jdbc", version.ref = "willena-sqlite-jdbc" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
 

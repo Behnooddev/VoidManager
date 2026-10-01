@@ -15,8 +15,7 @@ Requirements that drive the choice: Android quality first, offline operation, lo
 - Libraries proposed, each confirmed when first introduced:
   - kotlinx.coroutines, kotlinx.serialization, kotlinx-datetime
   - SQLDelight for typed SQL and migrations (ADR-0002)
-  - Tink for AEAD, streaming AEAD, HKDF and HPKE (ADR-0003)
-  - Bouncy Castle for Argon2id (ADR-0003)
+  - Bouncy Castle for Argon2id and HKDF, platform AES-GCM (ADR-0003)
   - Koin for dependency injection
   - Coil for image loading
   - ZXing core for QR generation

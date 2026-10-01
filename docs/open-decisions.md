@@ -30,3 +30,6 @@
 | 19 | Brand assets | Logo mark, banner and icon masters are needed under `assets/brand` (Phase 1.1) |
 | 20 | Dependency verification metadata | Generated after the first successful build |
 | 21 | Static analysis beyond Android lint | detekt is deferred until a release compatible with the Kotlin version is confirmed |
+| 22 | Argon2id calibration on the device | Target unlock time and measurement method, decided in Phase 3b |
+| 23 | Android Keystore device key adapter | Biometric prompt, key invalidation on enrollment change, StrongBox use. Phase 3b |
+| 24 | Idle and background lock defaults | Implemented as 60 s idle and lock on background with no grace. Confirm in Phase 3b with a device |

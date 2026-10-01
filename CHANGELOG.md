@@ -4,6 +4,25 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-30
+
+### Added
+
+- `core:crypto`: Argon2id key derivation, HKDF, AES-256-GCM, the key file format, vault creation, unlock, lock, password change, and an optional device-key unlock slot. Checked against RFC 9106, RFC 5869 and published AES-GCM vectors.
+- `core:security`: password policy with strength estimate, auto-lock controller, re-authentication window, secret reveal timer.
+- Value encryption for sensitivity levels 2 and 3 through a session-bound `ValueCipher`.
+
+### Changed
+
+- Tink is no longer a planned dependency for the key hierarchy (ADR-0003 amendment).
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.2.0] - 2026-09-29
 
 ### Added

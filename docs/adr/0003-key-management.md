@@ -24,3 +24,7 @@ The app needs password-based key derivation, authenticated encryption for values
 - Password change is cheap; vault key rotation is a separate operation.
 - Two crypto libraries to keep updated, both maintained.
 - Bouncy Castle's Argon2 is a pure-JVM implementation; performance on low-end devices is measured before the parameter floor is fixed.
+
+## Amendment (2026-09-30)
+
+Phase 3a implemented the hierarchy with fewer libraries than first proposed: AES-256-GCM comes from the platform provider, and Bouncy Castle supplies Argon2id and HKDF. Tink is not a dependency for now. Streaming encryption for backups and media (Phase 7) and HPKE for sharing (Phase 8) are decided when they are built, and Tink is a candidate for both. The implementation is checked against RFC 9106, RFC 5869 and published AES-GCM test vectors. Details: `docs/security/key-management.md`.

@@ -26,6 +26,7 @@ Status: Proposed. To be reviewed before the security foundation is implemented (
 | Logs and crash reports | Masked types, no telemetry, no crash upload, lint rule against direct logging | Developer builds may log more; they are not distributed |
 | Formula injection through exported cells | Cells starting with `=`, `+`, `-`, `@` are neutralized in CSV and XLSX | Behavior in third-party spreadsheet software varies |
 | Compromised dependency | Pinned versions, checksum verification, dependency audit in CI, minimal dependency set | Cannot eliminate supply-chain risk |
+| Modified key file (lower cost parameters, huge memory request) | Cost parameters are bound into the wrap as associated data and range-checked before any derivation runs | An attacker who can rewrite the file can still delete it; the vault is then unreachable without a backup |
 | Weak master password | Minimum length and strength estimate | The user can still choose a poor password above the minimum |
 | Coercion or shoulder surfing | Not defended beyond masking | Out of scope |
 
