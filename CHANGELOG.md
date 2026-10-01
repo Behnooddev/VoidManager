@@ -4,6 +4,10 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+### Changed
+
+- CI: all steps run after a failure and Gradle continues past failing tasks; the debug APK and the test and lint reports are uploaded as artifacts; the workflow can be started by hand.
+
 ## [0.3.0] - 2026-09-30
 
 ### Added

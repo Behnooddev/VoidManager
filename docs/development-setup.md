@@ -27,6 +27,15 @@ On Windows use `gradlew.bat` in place of `./gradlew`.
 
 The debug APK is written under `app/android/build/outputs/apk/debug/`.
 
+## Building without a local toolchain
+
+The project does not require Android Studio. The CI workflow builds the Android debug APK, compiles the desktop app, runs the unit tests and checks formatting on every push to `main` and on every pull request.
+
+- The APK is attached to each run as the `debug-apk` artifact (Actions tab, open the run, Artifacts section). It is signed with the debug key and can be installed on a device that allows installs from unknown sources.
+- Test and lint reports are attached as the `reports` artifact.
+- Every step after the first failure still runs, and Gradle continues after a failing task, so a single run lists most problems at once.
+- The full log of a run can be downloaded from the run page (gear icon, "Download log archive").
+
 ## Versions
 
 Tool and library versions are pinned in `gradle/libs.versions.toml`. The application version is in `version.properties` and must have a matching entry in `CHANGELOG.md`.

@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,18 +26,52 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Make the wrapper executable
         run: chmod +x ./gradlew
+
+      # Every step below runs even when an earlier one failed, and Gradle keeps going after the
+      # first failing task, so one run reports as many problems as possible.
       - name: Version consistency
+        if: ${{ !cancelled() }}
         run: bash ./scripts/check-version-consistency.sh
       - name: Format check
-        run: ./gradlew spotlessCheck
+        if: ${{ !cancelled() }}
+        run: ./gradlew --continue spotlessCheck
       - name: Unit tests
-        run: ./gradlew :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest :core:security:jvmTest :core:crypto:test
-      - name: Build data modules
-        run: ./gradlew :core:model:assemble :core:database:assemble :core:data:assemble :core:security:assemble :core:crypto:assemble
+        if: ${{ !cancelled() }}
+        run: >
+          ./gradlew --continue
+          :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest
+          :core:security:jvmTest :core:crypto:test
+      - name: Build shared modules
+        if: ${{ !cancelled() }}
+        run: >
+          ./gradlew --continue
+          :core:model:assemble :core:database:assemble :core:data:assemble
+          :core:security:assemble :core:crypto:assemble
       - name: Android debug build and lint
-        run: ./gradlew :app:android:assembleDebug :app:android:lintDebug
+        if: ${{ !cancelled() }}
+        run: ./gradlew --continue :app:android:assembleDebug :app:android:lintDebug
       - name: Desktop compile
-        run: ./gradlew :app:desktop:classes
+        if: ${{ !cancelled() }}
+        run: ./gradlew --continue :app:desktop:classes
+
+      - name: Upload debug APK
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/android/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/reports/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+          retention-days: 7
 
   dependency-review:
     if: github.event_name == 'pull_request'
