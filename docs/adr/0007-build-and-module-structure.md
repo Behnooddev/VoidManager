@@ -26,3 +26,7 @@ Android Gradle plugin 9 is not compatible with the Kotlin Multiplatform plugin w
 - Module boundaries match the platform split from the start.
 - Android build type variants are not available in shared modules.
 - Every version in the catalog needs a check against the compatibility tables when updated.
+
+## Amendment (2026-10-01)
+
+`compileSdk` is 37, because Compose Multiplatform 1.12.1 depends on AndroidX libraries that require it. `targetSdk` remains 36. See `docs/bug-log.md`, BUG-003.

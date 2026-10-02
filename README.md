@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/brand/Banner.png" alt="VoidManager" width="100%">
+  <img src="assets/brand/banner.png" alt="VoidManager" width="100%">
 </p>
 
 # VoidManager

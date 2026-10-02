@@ -4,7 +4,7 @@ Status: Proposed. Workflows are written in Phase 1 and extended per phase.
 
 ## Current state
 
-The workflow in `.github/workflows/ci.yml` runs: wrapper validation, version consistency, `spotlessCheck`, JVM unit tests of `core:common`, Android debug build with lint, desktop compile, dependency review on pull requests, and a secret scan. It has not run yet; the first run on GitHub is the first verification of the build.
+The workflow in `.github/workflows/ci.yml` runs: wrapper validation, version consistency, `spotlessCheck`, JVM unit tests, assembly of the shared modules, the Android debug build with lint, the desktop compile, dependency review on pull requests, and a secret scan. It has run; the results and the defects it found are in `bug-log.md`. Every step runs even after an earlier failure, and the debug APK and test reports are uploaded as artifacts.
 
 Not in place yet: dependency checksum verification (`gradle/verification-metadata.xml` is generated after the first successful build), release signing, desktop installers, checksums, CodeQL.
 

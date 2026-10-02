@@ -25,3 +25,7 @@ The matrix lives in `CHANGELOG.md` per release and lists: app version, schema ve
 - A change to the share package or session that older apps cannot handle increments the protocol version. An app rejects unknown newer versions with a message asking the sender or recipient to update.
 - A consistency check in CI fails when versions disagree across files or the changelog lacks an entry for the current version.
 - Breaking changes are never released without release notes.
+
+## Fix releases
+
+Every change that fixes a defect, however small, is a patch release: the patch number in `version.properties` is raised, `CHANGELOG.md` gets an entry under Fixed, the defect is recorded in `bug-log.md` with cause, fix and prevention, and the handoff of the affected phase is updated. A fix is never merged silently into the previous version.

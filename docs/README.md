@@ -18,6 +18,7 @@
 | [ci-cd.md](ci-cd.md) | Pipelines, checks, release artifacts |
 | [versioning.md](versioning.md) | Independent version numbers and the compatibility matrix |
 | [migrations.md](migrations.md) | Database, backup and share migration rules |
+| [bug-log.md](bug-log.md) | Defects found, their causes, fixes and warnings |
 | [roadmap.md](roadmap.md) | Phases, exit criteria, sequencing |
 | [repository-layout.md](repository-layout.md) | Planned repository tree |
 | [open-decisions.md](open-decisions.md) | Resolved and open decisions |

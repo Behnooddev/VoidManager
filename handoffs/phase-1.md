@@ -6,6 +6,10 @@ Date: 2026-09-29
 
 The Gradle build, the module structure, an empty application shell for Android and desktop, a logging facade, design system tokens and base components, CI, repository policy files, and the brand asset specification.
 
+## Verification update (2026-10-01, version 0.3.1)
+
+The first CI run of version 0.3.0 built these modules with Gradle for the first time. Results are in `docs/bug-log.md`. Items in the sections below that say the build or the generated code was unverified are superseded by that run, except where the bug log lists them as still open.
+
 ## Delivered
 
 | Item | Status | Notes |

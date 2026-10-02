@@ -6,7 +6,7 @@ Status: Proposed.
 
 - Kotlin, Compose Multiplatform UI, single-activity app.
 - Proposed `minSdk` 26. Rationale: `java.time` without desugaring, mature Android Keystore behavior, and StrongBox where present. Devices below API 26 are not supported. Confirmed as the default on 2026-09-29.
-- `targetSdk` follows the latest stable API level and is set in Phase 1.
+- `compileSdk` is 37, which the Compose version in use requires. `targetSdk` is 36; the two are independent (see `bug-log.md`, BUG-003).
 - Must run on devices without Google Play services. No hard dependency on Google Play services libraries anywhere in core flows.
 - Photo import uses the system photo picker, so the app requests no broad storage permission.
 - Sensitive screens set `FLAG_SECURE`. The recent-apps thumbnail is hidden while locked.

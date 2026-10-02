@@ -6,6 +6,10 @@ Date: 2026-09-30
 
 Phase 3 of the roadmap is split. Phase 3a covers the key hierarchy, encryption of stored values, the key file, vault lifecycle (create, unlock, lock, change password), the lock and re-authentication logic, and the password policy. Phase 3b covers everything that needs screens or a device: setup and unlock screens, Android Keystore device unlock, calibration of the cost parameters, and the People, Personal, Quick Add, profile and trash screens.
 
+## Verification update (2026-10-01, version 0.3.1)
+
+The first CI run of version 0.3.0 built these modules with Gradle for the first time. Results are in `docs/bug-log.md`. Items in the sections below that say the build or the generated code was unverified are superseded by that run, except where the bug log lists them as still open.
+
 ## Delivered
 
 | Item | Status | Notes |
@@ -55,6 +59,10 @@ Phase 3 of the roadmap is split. Phase 3a covers the key hierarchy, encryption o
 1. Push, read the CI run, fix compile errors in the order `core:model`, `core:database`, `core:data`, `core:security`, `core:crypto`.
 2. Run `./gradlew :core:crypto:test` and `:core:security:jvmTest` locally. The integration test in `core:crypto` also needs the SQLDelight generated code.
 3. Phase 3b: wire a `VaultManager` and `AutoLockController` into the application; build setup and unlock screens; add the Android Keystore adapter; calibrate the cost; then the People and Personal screens.
+
+## Revision 0.3.1
+
+Defects found by the first CI run were fixed in 0.3.1: BUG-002 (Properties import in the Android build script), BUG-003 (`compileSdk` 37) and BUG-004 (a test that did not compile). Confirmed by CI: Gradle configuration, formatting, SQLDelight code generation, the encrypted database tests, the crypto tests including the integration test, the shared UI and desktop compile. Still to be confirmed: the Android debug build and lint after the `compileSdk` change, and the `core:data` repository tests.
 
 ## Open items
 

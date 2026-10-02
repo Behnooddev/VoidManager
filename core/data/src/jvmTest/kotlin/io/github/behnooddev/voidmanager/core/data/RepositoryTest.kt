@@ -137,8 +137,8 @@ class RepositoryTest {
             vault.database.fieldValueQueries
                 .selectValueById(
                     a.id,
-                ) { _, _, _, _, _, cipher, _, _, _, _, _, _, _, _, _, _ -> cipher }
-                .executeAsOne()!!
+                ) { _, _, _, _, _, cipher, _, _, _, _, _, _, _, _, _, _ -> checkNotNull(cipher) }
+                .executeAsOne()
         vault.overwriteCiphertext(valueId = b.id, cipherBytes = stolen)
 
         assertFailsWith<IllegalStateException> { vault.fields.get(b.id) }

@@ -3,7 +3,7 @@
 ## Requirements
 
 - JDK 17 or newer. The build targets Java 17 bytecode. CI uses JDK 21.
-- Android SDK with platform 36 and build tools 36.0.0 for the Android app.
+- Android SDK with platform 37 for the Android app (`compileSdk` is 37; the Android Gradle plugin installs the build tools it needs).
 - An IDE that supports the Android Gradle plugin version in `gradle/libs.versions.toml`: a current Android Studio, or IntelliJ IDEA 2026.1.2 or newer with the Android plugin.
 - Git.
 

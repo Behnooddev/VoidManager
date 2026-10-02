@@ -4,9 +4,25 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-01
+
+### Fixed
+
+- BUG-002: the Android build script used `java.util.Properties`, which does not resolve inside a Gradle Kotlin script; it now imports `java.util.Properties`. This error stopped every Gradle step.
+- BUG-003: `compileSdk` raised from 36 to 37, which Compose Multiplatform 1.12.1 requires. `targetSdk` remains 36.
+- BUG-004: a test in `core:data` returned a nullable value from a query mapper and did not compile.
+
 ### Changed
 
 - CI: all steps run after a failure and Gradle continues past failing tasks; the debug APK and the test and lint reports are uploaded as artifacts; the workflow can be started by hand.
+- Added `docs/bug-log.md` and the rule that every fix is a patch release.
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
 
 ## [0.3.0] - 2026-09-30
 

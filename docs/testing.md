@@ -20,15 +20,15 @@ Status: Proposed.
 
 | Module | Tests | Ran where |
 | --- | --- | --- |
-| `core:common` | logging facade | Authoring environment and CI |
-| `core:model` | id generation, field registry, relationship types, masked text | Authoring environment |
+| `core:common` | logging facade | Authoring environment and CI (passed) |
+| `core:model` | id generation, field registry, relationship types, masked text | Authoring environment and CI (passed) |
 | `core:data` (logic) | text and phone normalization, sensitivity and sharing rules | Authoring environment |
 | `core:database` (pure) | migration planning, key formatting, encryption check | Authoring environment |
-| `core:crypto` | Argon2id, HKDF and AES-GCM against published vectors; key file; unlock, lock, password change, device unlock; tampering | Authoring environment (39 tests) |
-| `core:security` | password policy, auto-lock, re-authentication window, reveal timer | Authoring environment (20 tests) |
-| `core:crypto` integration | Key hierarchy with the encrypted database and repositories | Written, not run |
-| `core:database` (JVM) | encrypted vault create, reopen, wrong key, newer schema | Written, not run |
-| `core:data` (JVM) | repositories against an encrypted vault | Written, not run |
+| `core:crypto` | Argon2id, HKDF and AES-GCM against published vectors; key file; unlock, lock, password change, device unlock; tampering | Authoring environment (39 tests) and CI (passed) |
+| `core:security` | password policy, auto-lock, re-authentication window, reveal timer | Authoring environment (20 tests) and CI (passed) |
+| `core:crypto` integration | Key hierarchy with the encrypted database and repositories | CI (passed; it runs inside `:core:crypto:test`) |
+| `core:database` (JVM) | encrypted vault create, reopen, wrong key, newer schema | CI (passed) |
+| `core:data` (JVM) | repositories against an encrypted vault | CI: did not compile in 0.3.0 (BUG-004), fixed in 0.3.1, result pending |
 | SQL schema | constraints, cascades, all queries | Ran against SQLite in the authoring environment, outside Gradle |
 
 ## Required behavior coverage

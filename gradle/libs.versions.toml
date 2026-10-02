@@ -11,7 +11,7 @@ willena-sqlite-jdbc = "3.53.4.0"
 bouncycastle = "1.86"
 spotless = "7.0.4"
 ktlint = "1.5.0"
-android-compileSdk = "36"
+android-compileSdk = "37"
 android-targetSdk = "36"
 android-minSdk = "26"
 
