@@ -46,11 +46,14 @@ class VaultManager(
 ) {
     fun exists(): Boolean = store.read() != null
 
-    fun create(password: CharArray): VaultSession {
+    fun create(
+        password: CharArray,
+        params: KdfParams = kdfParams,
+    ): VaultSession {
         check(!exists()) { "A vault already exists" }
         require(password.isNotEmpty()) { "The password is empty" }
         val vaultKey = ByteArray(VaultKeys.KEY_BYTES).also { random.nextBytes(it) }
-        val envelope = wrapWithPassword(vaultKey, password, deviceWrapped = null)
+        val envelope = wrapWithPassword(vaultKey, password, deviceWrapped = null, params = params)
         store.write(envelope.toBytes())
         return VaultSession(vaultKey)
     }
@@ -107,6 +110,9 @@ class VaultManager(
         }
     }
 
+    /** True when the key file holds a device-key slot. */
+    fun deviceUnlockEnabled(): Boolean = (load() as? Loaded.Ok)?.envelope?.deviceWrapped != null
+
     fun disableDeviceUnlock() {
         val envelope = (load() as? Loaded.Ok)?.envelope ?: return
         store.write(envelope.withDeviceWrap(null).toBytes())
@@ -153,19 +159,20 @@ class VaultManager(
         vaultKey: ByteArray,
         password: CharArray,
         deviceWrapped: ByteArray?,
+        params: KdfParams = kdfParams,
     ): KeyEnvelope {
         val salt = ByteArray(Argon2idKdf.SALT_BYTES).also { random.nextBytes(it) }
-        val shell = KeyEnvelope(KeyEnvelope.CURRENT_VERSION, kdfParams, salt, ByteArray(0), deviceWrapped)
+        val shell = KeyEnvelope(KeyEnvelope.CURRENT_VERSION, params, salt, ByteArray(0), deviceWrapped)
         val passwordBytes = passwordToBytes(password)
         val kek =
             try {
-                Argon2idKdf.derive(passwordBytes, salt, kdfParams)
+                Argon2idKdf.derive(passwordBytes, salt, params)
             } finally {
                 passwordBytes.fill(0)
             }
         try {
             val wrapped = AesGcm.encrypt(kek, shell.passwordAad(), vaultKey)
-            return shell.withPasswordWrap(kdfParams, salt, wrapped)
+            return shell.withPasswordWrap(params, salt, wrapped)
         } finally {
             kek.fill(0)
         }

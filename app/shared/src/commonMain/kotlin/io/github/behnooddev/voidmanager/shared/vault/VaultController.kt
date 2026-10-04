@@ -37,6 +37,69 @@ class VaultController(
         run(password) { flow.unlock(it) }
     }
 
+    /** True when the unlock screen should offer biometric unlock. */
+    fun deviceUnlockReady(keys: DeviceKeyProvider): Boolean =
+        keys.isAvailable() && keys.hasKey() && flow.deviceUnlockEnabled()
+
+    /** Asks the user to authenticate, then opens the vault with the released key. */
+    suspend fun unlockWithDevice(keys: DeviceKeyProvider) {
+        if (busy || stage != Stage.Locked) return
+        busy = true
+        try {
+            when (val result = keys.releaseKey()) {
+                is DeviceKeyResult.Key ->
+                    try {
+                        withContext(worker + NonCancellable) { flow.unlockWithDeviceKey(result.bytes) }
+                    } finally {
+                        result.bytes.fill(NUL)
+                    }
+                DeviceKeyResult.Cancelled -> Unit
+                DeviceKeyResult.Invalidated -> {
+                    flow.deviceKeyInvalidated()
+                    keys.deleteKey()
+                }
+                DeviceKeyResult.Unavailable, DeviceKeyResult.Failed -> flow.deviceUnlockFailed()
+            }
+        } finally {
+            busy = false
+            publish()
+        }
+    }
+
+    /** Turns biometric unlock on. The vault must be unlocked. */
+    suspend fun enableDeviceUnlock(keys: DeviceKeyProvider): DeviceUnlockChange {
+        if (busy || stage !is Stage.Unlocked) return DeviceUnlockChange.Failed
+        busy = true
+        try {
+            return when (val result = keys.createKey()) {
+                is DeviceKeyResult.Key -> {
+                    val enabled =
+                        try {
+                            withContext(worker + NonCancellable) { flow.enableDeviceUnlock(result.bytes) }
+                        } finally {
+                            result.bytes.fill(NUL)
+                        }
+                    if (enabled) {
+                        DeviceUnlockChange.Enabled
+                    } else {
+                        keys.deleteKey()
+                        DeviceUnlockChange.Failed
+                    }
+                }
+                DeviceKeyResult.Cancelled -> DeviceUnlockChange.Cancelled
+                else -> DeviceUnlockChange.Failed
+            }
+        } finally {
+            busy = false
+            publish()
+        }
+    }
+
+    fun disableDeviceUnlock(keys: DeviceKeyProvider) {
+        flow.disableDeviceUnlock()
+        keys.deleteKey()
+    }
+
     fun lock() {
         flow.lock()
         publish()

@@ -4,6 +4,30 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-03
+
+Phase 3b-1b: biometric unlock and a key derivation cost fitted to the device.
+
+### Added
+
+- Biometric unlock on Android. A 256-bit AES key lives in the Android Keystore (StrongBox when present), usable only after a strong-biometric prompt for each operation, and invalidated when biometrics change. The vault's device key is 32 random bytes stored encrypted by that key; the key file keeps a second wrapping of the vault key under it. The password always keeps working.
+- Settings screen: turn biometric unlock on or off.
+- Unlock screen: "Unlock with biometrics" button when it is on and available. If the system key is invalidated, the slot is removed and the screen says why.
+- `KdfCalibrator`: at vault creation one timed Argon2id derivation sets the iteration count (2 to 10) for about 700 ms on this device; memory is lowered only when even two iterations take over 3 seconds. The cost is stored in the key file, so the vault opens on any device. Existing vaults are unchanged.
+- `VaultGateway.deviceUnlockEnabled`, `unlockWithDeviceKey`, `disableDeviceUnlock` and `OpenedVault.enableDeviceUnlock`; `VaultManager.deviceUnlockEnabled` and a cost parameter on `create`.
+- Dependencies: `androidx.biometric` 1.1.0 and `androidx.fragment` 1.8.6. `MainActivity` is now a `FragmentActivity`.
+
+### Changed
+
+- CI: the "Install Android platform 37" step is removed. Its log showed only a broken pipe, and the platform is already on the runner (the 0.4.0 build did not download it). The 0.4.0 note that this was fixed was wrong.
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1 (the device-key slot already existed).
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.4.0] - 2026-10-03
 
 Phase 3b-1: the vault can be created and unlocked from the app.

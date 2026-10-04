@@ -3,14 +3,15 @@ package io.github.behnooddev.voidmanager.android
 import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.fragment.app.FragmentActivity
 import io.github.behnooddev.voidmanager.shared.App
 import io.github.behnooddev.voidmanager.shared.vault.VaultController
 
-class MainActivity : ComponentActivity() {
+/** A FragmentActivity, because the biometric prompt is shown through a fragment. */
+class MainActivity : FragmentActivity() {
     private val controller: VaultController
         get() = (application as VoidManagerApp).controller
 
@@ -23,7 +24,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
-        setContent { App(controller) }
+        setContent { App(controller, deviceKeys = AndroidDeviceKeyProvider(this)) }
     }
 
     override fun onStart() {

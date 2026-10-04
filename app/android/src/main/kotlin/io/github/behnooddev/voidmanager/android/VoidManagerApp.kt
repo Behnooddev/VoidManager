@@ -3,6 +3,7 @@ package io.github.behnooddev.voidmanager.android
 import android.app.Application
 import android.os.SystemClock
 import io.github.behnooddev.voidmanager.core.crypto.FileKeyEnvelopeStore
+import io.github.behnooddev.voidmanager.core.crypto.KdfCalibrator
 import io.github.behnooddev.voidmanager.core.crypto.VaultManager
 import io.github.behnooddev.voidmanager.core.crypto.VaultService
 import io.github.behnooddev.voidmanager.core.database.AndroidDriverFactory
@@ -24,7 +25,13 @@ class VoidManagerApp : Application() {
     override fun onCreate() {
         super.onCreate()
         val manager = VaultManager(FileKeyEnvelopeStore(File(filesDir, KEY_FILE_NAME)))
-        val gateway = VaultService(manager, AndroidDriverFactory(this, DATABASE_NAME))
+        val gateway =
+            VaultService(
+                manager = manager,
+                driverFactory = AndroidDriverFactory(this, DATABASE_NAME),
+                // Times one real derivation when a vault is created and fits the iteration count to this device.
+                calibrate = { KdfCalibrator.calibrate(KdfCalibrator::measureArgon2) },
+            )
         // elapsedRealtime keeps counting while the device sleeps, so a long sleep cannot extend a session.
         val clock = { SystemClock.elapsedRealtime() }
         val autoLock = AutoLockController(policy = { AutoLockPolicy() }, monotonicMillis = clock)

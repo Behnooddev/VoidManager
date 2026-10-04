@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name">VoidManager</string>
+  <string name="biometric_title">VoidManager</string>
+  <string name="biometric_subtitle_unlock">Unlock your vault</string>
+  <string name="biometric_subtitle_enable">Turn on biometric unlock</string>
+  <string name="biometric_use_password">Use password</string>
 </resources>

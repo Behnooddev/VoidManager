@@ -2,6 +2,10 @@
 
 Date: 2026-10-03. Version 0.4.0.
 
+## Verification update (2026-10-03)
+
+The first CI run of 0.4.0 was fully green: formatting, all unit tests (including `app:shared` and `VaultServiceTest`), shared modules, Android debug build and lint, desktop compile and the secret scan. Items below that say the build or a test was not run are superseded, except the device checks, which still have not happened.
+
 ## Scope
 
 Phase 3b is split in three. 3b-1 (this one) makes the vault usable from the app: create it, unlock it, lock it. 3b-1b adds Android Keystore device unlock with the biometric prompt and calibrates the Argon2id cost on a device. 3b-2 adds the People, Personal, Quick Add and trash screens.

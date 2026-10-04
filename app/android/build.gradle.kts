@@ -72,4 +72,7 @@ dependencies {
     implementation(project(":core:crypto"))
     implementation(project(":core:security"))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.fragment)
+    implementation(libs.kotlinx.coroutines.core)
 }

@@ -77,6 +77,15 @@ The wrapped vault key lives in a small binary file next to the database (`vault.
 - `FLAG_SECURE` is always on for the Android window. A setting to allow screenshots is not planned.
 - Screens that edit data must call `VaultController.onInteraction()` on text changes, because typing on the soft keyboard does not produce touch events and would otherwise let the idle timer lock the vault in the middle of an edit.
 
+## Biometric unlock and cost calibration (0.4.1)
+
+- The Android Keystore holds an AES-256-GCM key that requires user authentication for every operation and accepts only strong biometrics (class 3), not the screen lock. It is generated in StrongBox when the device has it. `setInvalidatedByBiometricEnrollment` makes the key unusable when a fingerprint or face is added or all are removed.
+- The vault's device key (KEK_dev) is 32 random bytes made when the user turns the feature on. It is stored in `device.key` as the 12-byte IV followed by its AES-GCM encryption under the Keystore key. Turning the feature on and each unlock both show a biometric prompt. The plaintext key exists only in memory for the duration of the call and is overwritten afterwards.
+- `vault.keys` holds `wrap(VK, KEK_dev)` next to the password wrap. Neither file alone opens the vault: the password slot needs the password, the device slot needs the Keystore.
+- If the Keystore key is invalidated, the app removes the device slot and `device.key` and asks for the password. A device key that fails to open the slot is treated the same way. Wrong biometric attempts are limited by the system, so they do not count toward the app's password wait.
+- Cost calibration measures one derivation at 64 MiB and 3 iterations when a vault is created, assumes time grows linearly with iterations, and picks the iteration count that gives about 700 ms, clamped to 2 to 10. The first derivation includes JIT warm-up, so the estimate leans toward fewer iterations. The numbers 700 ms and 3 s are starting values to be checked against real devices. Changing the password does not recalibrate yet.
+- Limits: the Keystore protects the key, not the process. On an unlocked, running app the vault key is in memory. A device with a compromised Keystore or rooted OS is outside this protection.
+
 ## Recovery limits
 
 - There is no server and no recovery service. A forgotten master password cannot be reset by anyone.

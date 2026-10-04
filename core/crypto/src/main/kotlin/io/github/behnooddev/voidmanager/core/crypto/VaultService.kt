@@ -23,6 +23,8 @@ class VaultService(
     private val ids: IdGenerator = UuidV7Generator(clock = { System.currentTimeMillis() }),
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val opener: VaultDatabaseOpener = VaultDatabaseOpener(),
+    /** Picks the key derivation cost for a new vault. Null uses the manager's configured cost. */
+    private val calibrate: (() -> KdfParams)? = null,
 ) : VaultGateway {
     override fun exists(): Boolean = manager.exists()
 
@@ -30,7 +32,7 @@ class VaultService(
         if (manager.exists()) return OpenOutcome.AlreadyExists
         val session =
             try {
-                manager.create(password)
+                if (calibrate == null) manager.create(password) else manager.create(password, calibrate.invoke())
             } catch (e: IOException) {
                 return OpenOutcome.StorageFailure
             }
@@ -47,6 +49,26 @@ class VaultService(
             // A password unlock never asks for the device slot; if it is reported anyway, nothing was opened.
             UnlockResult.DeviceUnlockNotEnabled -> OpenOutcome.WrongPasswordOrCorrupt
         }
+
+    override fun deviceUnlockEnabled(): Boolean = manager.deviceUnlockEnabled()
+
+    override fun unlockWithDeviceKey(deviceKey: ByteArray): OpenOutcome =
+        when (val result = manager.unlockWithDeviceKey(deviceKey)) {
+            is UnlockResult.Unlocked -> open(result.session)
+            UnlockResult.NoVault -> OpenOutcome.NoVault
+            UnlockResult.WrongPasswordOrCorrupt -> OpenOutcome.DeviceKeyRejected
+            UnlockResult.InvalidKeyFile -> OpenOutcome.InvalidKeyFile
+            is UnlockResult.UnsupportedVersion -> OpenOutcome.UnsupportedVersion(result.version)
+            UnlockResult.DeviceUnlockNotEnabled -> OpenOutcome.DeviceUnlockNotEnabled
+        }
+
+    override fun disableDeviceUnlock() {
+        try {
+            manager.disableDeviceUnlock()
+        } catch (e: IOException) {
+            // The slot stays; the platform key is deleted by the caller, so the slot cannot be opened again.
+        }
+    }
 
     private fun open(session: VaultSession): OpenOutcome {
         val opened =
@@ -71,7 +93,7 @@ class VaultService(
     ): OpenOutcome =
         try {
             val repositories = VaultRepositories(opened.database, session.valueCipher(), ids, clock)
-            OpenOutcome.Opened(SqlOpenedVault(session, opened.driver, repositories))
+            OpenOutcome.Opened(SqlOpenedVault(session, opened.driver, manager, repositories))
         } catch (e: Exception) {
             closeQuietly(opened.driver)
             session.lock()
@@ -90,9 +112,18 @@ private fun closeQuietly(driver: SqlDriver) {
 private class SqlOpenedVault(
     private val session: VaultSession,
     private val driver: SqlDriver,
+    private val manager: VaultManager,
     override val repositories: VaultRepositories,
 ) : OpenedVault {
     private var closed = false
+
+    override fun enableDeviceUnlock(deviceKey: ByteArray): Boolean =
+        try {
+            manager.enableDeviceUnlock(session, deviceKey)
+            true
+        } catch (e: IOException) {
+            false
+        }
 
     override fun lock() {
         synchronized(this) {

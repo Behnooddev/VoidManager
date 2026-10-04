@@ -15,6 +15,13 @@ import kotlin.test.assertTrue
 
 private class FakeVault : OpenedVault {
     var lockCalls = 0
+    var enableResult = true
+    var enabledWith: ByteArray? = null
+
+    override fun enableDeviceUnlock(deviceKey: ByteArray): Boolean {
+        enabledWith = deviceKey.copyOf()
+        return enableResult
+    }
 
     override val repositories: VaultRepositories
         get() = error("The repositories are not used by these tests")
@@ -31,8 +38,20 @@ private class FakeGateway(
     var createResult: OpenOutcome = OpenOutcome.Opened(vault)
     var unlockResult: OpenOutcome = OpenOutcome.Opened(vault)
     var unlockCalls = 0
+    var deviceEnabled = false
+    var deviceResult: OpenOutcome = OpenOutcome.Opened(vault)
+    var disableCalls = 0
 
     override fun exists() = vaultExists
+
+    override fun deviceUnlockEnabled() = deviceEnabled
+
+    override fun unlockWithDeviceKey(deviceKey: ByteArray): OpenOutcome = deviceResult
+
+    override fun disableDeviceUnlock() {
+        disableCalls++
+        deviceEnabled = false
+    }
 
     override fun create(password: CharArray): OpenOutcome = createResult
 
@@ -208,5 +227,62 @@ class VaultFlowTest {
         flow.unlock(password)
         flow.checkAutoLock()
         assertTrue(flow.stage is Stage.Unlocked)
+    }
+
+    private val deviceKey = ByteArray(32) { 5 }
+
+    @Test
+    fun deviceUnlockOpensTheVaultAndIsNotThrottled() {
+        val gateway = FakeGateway(vaultExists = true).apply { deviceResult = OpenOutcome.Opened(vault) }
+        val flow = flow(gateway)
+        flow.unlockWithDeviceKey(deviceKey)
+        assertIs<Stage.Unlocked>(flow.stage)
+        assertNull(flow.failure)
+    }
+
+    @Test
+    fun aRejectedDeviceKeyTurnsDeviceUnlockOffWithoutThrottlingThePassword() {
+        val gateway =
+            FakeGateway(vaultExists = true).apply {
+                deviceEnabled = true
+                deviceResult = OpenOutcome.DeviceKeyRejected
+            }
+        val flow = flow(gateway)
+        repeat(6) { flow.unlockWithDeviceKey(deviceKey) }
+        assertEquals(Stage.Locked, flow.stage)
+        assertEquals(Failure.DeviceUnlockFailed, flow.failure)
+        assertEquals(0L, flow.throttleRemainingMillis())
+        assertTrue(!flow.deviceUnlockEnabled())
+    }
+
+    @Test
+    fun anInvalidatedKeyRemovesTheSlotAndNamesTheReason() {
+        val gateway = FakeGateway(vaultExists = true).apply { deviceEnabled = true }
+        val flow = flow(gateway)
+        flow.deviceKeyInvalidated()
+        assertEquals(Failure.DeviceUnlockInvalidated, flow.failure)
+        assertEquals(1, gateway.disableCalls)
+    }
+
+    @Test
+    fun deviceUnlockIsIgnoredUnlessTheVaultIsLocked() {
+        val gateway = FakeGateway(vaultExists = false)
+        val flow = flow(gateway)
+        flow.unlockWithDeviceKey(deviceKey)
+        assertEquals(Stage.NeedsSetup, flow.stage)
+    }
+
+    @Test
+    fun enablingDeviceUnlockNeedsAnUnlockedVaultAndPassesTheKeyOn() {
+        val gateway = FakeGateway(vaultExists = false)
+        val flow = flow(gateway)
+        assertTrue(!flow.enableDeviceUnlock(deviceKey))
+
+        flow.create(password)
+        assertTrue(flow.enableDeviceUnlock(deviceKey))
+        assertEquals(deviceKey.toList(), gateway.vault.enabledWith?.toList())
+
+        gateway.vault.enableResult = false
+        assertTrue(!flow.enableDeviceUnlock(deviceKey))
     }
 }

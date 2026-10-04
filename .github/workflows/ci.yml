@@ -47,10 +47,6 @@ jobs:
           ./gradlew --continue
           :core:model:assemble :core:database:assemble :core:data:assemble
           :core:security:assemble :core:crypto:assemble
-      - name: Install Android platform 37
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" < <(yes) || true'
       - name: Android debug build and lint
         if: ${{ !cancelled() }}
         run: ./gradlew --continue :app:android:assembleDebug :app:android:lintDebug

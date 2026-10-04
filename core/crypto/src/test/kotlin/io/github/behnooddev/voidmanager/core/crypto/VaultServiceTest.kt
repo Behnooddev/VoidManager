@@ -85,4 +85,67 @@ class VaultServiceTest {
         File(dir, "vault.keys").writeBytes(ByteArray(40) { 7 })
         assertEquals(OpenOutcome.InvalidKeyFile, service.unlock(password.toCharArray()))
     }
+
+    private val deviceKey = ByteArray(32) { (it * 3 + 1).toByte() }
+
+    @Test
+    fun deviceUnlockOpensTheVaultWithoutThePassword() {
+        val service = service()
+        val vault = opened(service.create(password.toCharArray()))
+        val person = (vault.repositories.entities.createPerson("Synthetic Person") as Outcome.Success).value
+        assertFalse(service.deviceUnlockEnabled())
+        assertTrue(vault.enableDeviceUnlock(deviceKey))
+        vault.lock()
+
+        assertTrue(service.deviceUnlockEnabled())
+        val again = opened(service.unlockWithDeviceKey(deviceKey))
+        assertEquals(
+            listOf(person.id),
+            again.repositories.entities
+                .listActive()
+                .map { it.id },
+        )
+        again.lock()
+    }
+
+    @Test
+    fun aWrongDeviceKeyIsRejectedAndThePasswordStillWorks() {
+        val service = service()
+        val vault = opened(service.create(password.toCharArray()))
+        vault.enableDeviceUnlock(deviceKey)
+        vault.lock()
+
+        assertEquals(OpenOutcome.DeviceKeyRejected, service.unlockWithDeviceKey(ByteArray(32) { 9 }))
+        assertIs<OpenOutcome.Opened>(service.unlock(password.toCharArray())).vault.lock()
+    }
+
+    @Test
+    fun disablingDeviceUnlockClosesTheSlot() {
+        val service = service()
+        val vault = opened(service.create(password.toCharArray()))
+        vault.enableDeviceUnlock(deviceKey)
+        vault.lock()
+
+        service.disableDeviceUnlock()
+
+        assertFalse(service.deviceUnlockEnabled())
+        assertEquals(OpenOutcome.DeviceUnlockNotEnabled, service.unlockWithDeviceKey(deviceKey))
+        assertIs<OpenOutcome.Opened>(service.unlock(password.toCharArray())).vault.lock()
+    }
+
+    @Test
+    fun theCalibratedCostIsWrittenToTheKeyFileAndStillUnlocks() {
+        val calibrated = KdfParams(memoryKiB = KdfParams.MIN_MEMORY_KIB, iterations = 3, parallelism = 1)
+        val service =
+            VaultService(
+                manager = VaultManager(FileKeyEnvelopeStore(File(dir, "vault.keys")), kdfParams = KdfParams.FLOOR),
+                driverFactory = JvmDriverFactory(File(dir, "vault.db")),
+                calibrate = { calibrated },
+            )
+        opened(service.create(password.toCharArray())).lock()
+
+        val envelope = KeyEnvelope.parse(File(dir, "vault.keys").readBytes())
+        assertEquals(calibrated, envelope.kdf)
+        assertIs<OpenOutcome.Opened>(service.unlock(password.toCharArray())).vault.lock()
+    }
 }

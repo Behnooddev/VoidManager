@@ -37,8 +37,10 @@ import io.github.behnooddev.voidmanager.shared.resources.nav_personal
 import io.github.behnooddev.voidmanager.shared.resources.nav_settings
 import io.github.behnooddev.voidmanager.shared.resources.placeholder_message
 import io.github.behnooddev.voidmanager.shared.resources.placeholder_title
+import io.github.behnooddev.voidmanager.shared.ui.SettingsScreen
 import io.github.behnooddev.voidmanager.shared.ui.SetupScreen
 import io.github.behnooddev.voidmanager.shared.ui.UnlockScreen
+import io.github.behnooddev.voidmanager.shared.vault.DeviceKeyProvider
 import io.github.behnooddev.voidmanager.shared.vault.Stage
 import io.github.behnooddev.voidmanager.shared.vault.VaultController
 import kotlinx.coroutines.delay
@@ -51,7 +53,10 @@ private const val EXPANDED_WIDTH_DP = 840
 private const val AUTO_LOCK_TICK_MILLIS = 1_000L
 
 @Composable
-fun App(controller: VaultController) {
+fun App(
+    controller: VaultController,
+    deviceKeys: DeviceKeyProvider? = null,
+) {
     VoidManagerTheme {
         LaunchedEffect(controller) {
             while (true) {
@@ -78,15 +83,18 @@ fun App(controller: VaultController) {
         ) {
             when (controller.stage) {
                 Stage.NeedsSetup -> SetupScreen(controller)
-                Stage.Locked -> UnlockScreen(controller)
-                is Stage.Unlocked -> AppShell(onLock = controller::lock)
+                Stage.Locked -> UnlockScreen(controller, deviceKeys)
+                is Stage.Unlocked -> AppShell(controller, deviceKeys)
             }
         }
     }
 }
 
 @Composable
-private fun AppShell(onLock: () -> Unit) {
+private fun AppShell(
+    controller: VaultController,
+    deviceKeys: DeviceKeyProvider?,
+) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
     val destinations = Destination.entries
     val items = destinations.map { VmNavItem(label = destinationLabel(it), icon = it.icon) }
@@ -101,11 +109,11 @@ private fun AppShell(onLock: () -> Unit) {
         if (maxWidth >= EXPANDED_WIDTH_DP.dp) {
             Row(Modifier.fillMaxSize()) {
                 VmNavigationRail(items = items, selectedIndex = selectedIndex, onSelect = { selectedIndex = it })
-                DestinationContent(destinations[selectedIndex], onLock, Modifier.weight(1f))
+                DestinationContent(destinations[selectedIndex], controller, deviceKeys, Modifier.weight(1f))
             }
         } else {
             Column(Modifier.fillMaxSize()) {
-                DestinationContent(destinations[selectedIndex], onLock, Modifier.weight(1f))
+                DestinationContent(destinations[selectedIndex], controller, deviceKeys, Modifier.weight(1f))
                 VmNavigationBar(items = items, selectedIndex = selectedIndex, onSelect = { selectedIndex = it })
             }
         }
@@ -115,7 +123,8 @@ private fun AppShell(onLock: () -> Unit) {
 @Composable
 private fun DestinationContent(
     destination: Destination,
-    onLock: () -> Unit,
+    controller: VaultController,
+    deviceKeys: DeviceKeyProvider?,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
@@ -124,15 +133,19 @@ private fun DestinationContent(
             actions = {
                 VmButton(
                     text = stringResource(Res.string.action_lock),
-                    onClick = onLock,
+                    onClick = controller::lock,
                     style = VmButtonStyle.Text,
                 )
             },
         )
-        VmEmptyState(
-            title = stringResource(Res.string.placeholder_title),
-            message = stringResource(Res.string.placeholder_message),
-        )
+        if (destination == Destination.Settings) {
+            SettingsScreen(controller, deviceKeys)
+        } else {
+            VmEmptyState(
+                title = stringResource(Res.string.placeholder_title),
+                message = stringResource(Res.string.placeholder_message),
+            )
+        }
     }
 }
 

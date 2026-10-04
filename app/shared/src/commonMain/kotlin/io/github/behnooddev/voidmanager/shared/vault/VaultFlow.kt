@@ -24,6 +24,12 @@ enum class Failure {
     UnsupportedVersion,
     NewerData,
     StorageFailure,
+
+    /** The biometric prompt failed, or the device key did not open the vault. The password still works. */
+    DeviceUnlockFailed,
+
+    /** Biometrics changed, so the platform key is gone and device unlock was turned off. */
+    DeviceUnlockInvalidated,
 }
 
 /**
@@ -58,6 +64,31 @@ class VaultFlow(
         failure = null
         handle(gateway.unlock(password))
     }
+
+    fun deviceUnlockEnabled(): Boolean = gateway.deviceUnlockEnabled()
+
+    /** Does nothing unless the stage is [Stage.Locked]. The caller wipes [deviceKey]. Wrong attempts are not throttled: the system limits biometric tries. */
+    fun unlockWithDeviceKey(deviceKey: ByteArray) {
+        if (stage != Stage.Locked) return
+        failure = null
+        handle(gateway.unlockWithDeviceKey(deviceKey))
+    }
+
+    fun deviceUnlockFailed() {
+        failure = Failure.DeviceUnlockFailed
+    }
+
+    /** The platform key is gone for good, so the slot in the key file is removed too. */
+    fun deviceKeyInvalidated() {
+        gateway.disableDeviceUnlock()
+        failure = Failure.DeviceUnlockInvalidated
+    }
+
+    /** Returns false when the vault is locked or the key file could not be written. The caller wipes [deviceKey]. */
+    fun enableDeviceUnlock(deviceKey: ByteArray): Boolean =
+        (stage as? Stage.Unlocked)?.vault?.enableDeviceUnlock(deviceKey) ?: false
+
+    fun disableDeviceUnlock() = gateway.disableDeviceUnlock()
 
     fun lock() {
         val current = stage as? Stage.Unlocked ?: return
@@ -103,6 +134,12 @@ class VaultFlow(
             is OpenOutcome.UnsupportedVersion -> failure = Failure.UnsupportedVersion
             OpenOutcome.NewerData -> failure = Failure.NewerData
             OpenOutcome.StorageFailure -> failure = Failure.StorageFailure
+            OpenOutcome.DeviceKeyRejected -> {
+                // The key that opens the slot is not the key that was stored, so the slot is dead.
+                gateway.disableDeviceUnlock()
+                failure = Failure.DeviceUnlockFailed
+            }
+            OpenOutcome.DeviceUnlockNotEnabled -> failure = Failure.DeviceUnlockFailed
         }
     }
 }

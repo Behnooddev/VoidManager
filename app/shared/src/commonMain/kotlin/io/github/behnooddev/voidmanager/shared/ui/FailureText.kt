@@ -2,6 +2,8 @@ package io.github.behnooddev.voidmanager.shared.ui
 
 import androidx.compose.runtime.Composable
 import io.github.behnooddev.voidmanager.shared.resources.Res
+import io.github.behnooddev.voidmanager.shared.resources.failure_device_failed
+import io.github.behnooddev.voidmanager.shared.resources.failure_device_invalidated
 import io.github.behnooddev.voidmanager.shared.resources.failure_invalid_key
 import io.github.behnooddev.voidmanager.shared.resources.failure_newer
 import io.github.behnooddev.voidmanager.shared.resources.failure_storage
@@ -19,5 +21,7 @@ internal fun failureText(failure: Failure): String =
             Failure.UnsupportedVersion -> Res.string.failure_unsupported
             Failure.NewerData -> Res.string.failure_newer
             Failure.StorageFailure -> Res.string.failure_storage
+            Failure.DeviceUnlockFailed -> Res.string.failure_device_failed
+            Failure.DeviceUnlockInvalidated -> Res.string.failure_device_invalidated
         },
     )
