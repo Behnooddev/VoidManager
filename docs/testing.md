@@ -28,7 +28,7 @@ Status: Proposed.
 | `core:security` | password policy, auto-lock, re-authentication window, reveal timer | Authoring environment (20 tests) and CI (passed) |
 | `core:crypto` integration | Key hierarchy with the encrypted database and repositories | CI (passed; it runs inside `:core:crypto:test`) |
 | `core:database` (JVM) | encrypted vault create, reopen, wrong key, newer schema | CI (passed) |
-| `core:data` (JVM) | repositories against an encrypted vault | CI: did not compile in 0.3.0 (BUG-004), fixed in 0.3.1, result pending |
+| `core:data` (JVM) | repositories against an encrypted vault | CI: did not compile in 0.3.0 (BUG-004); passes since 0.3.1 |
 | SQL schema | constraints, cascades, all queries | Ran against SQLite in the authoring environment, outside Gradle |
 
 ## Required behavior coverage

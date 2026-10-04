@@ -68,6 +68,15 @@ The wrapped vault key lives in a small binary file next to the database (`vault.
 - Locking drops the VK and derived keys from memory (byte arrays are zeroed), closes the database, cancels in-flight reveal states, and clears sensitive UI state. Navigation returns to the lock screen.
 - Limitation: the JVM does not guarantee that no copies of key material remain in memory. Zeroing reduces exposure; it does not make memory forensics on an unlocked device impossible.
 
+## Screens and lock behavior in the app (0.4.0)
+
+- `VaultFlow` (`app:shared`) is the lock state machine: no vault, locked, unlocked. It has no UI and no threads and is covered by unit tests; `VaultController` publishes its state to Compose and runs key derivation on a worker thread.
+- On Android the controller is owned by the `Application`, so a rotation does not lock the vault. The app locks as soon as the activity stops for any reason other than a configuration change, and after 60 seconds without a touch or key press while in the foreground.
+- Wrong passwords: after the fourth failure each further failure imposes a wait (5 seconds, doubling, capped at 5 minutes). The counter is in memory and restarts with the process. It is a usability measure, not a security boundary: an attacker with a copy of the files attacks the key file offline, where only the Argon2id cost and the password strength matter.
+- Passwords are typed into a text field that holds a `String`, which cannot be overwritten. The `CharArray` copy passed to the vault is overwritten as soon as the call returns. Password text is kept in plain `remember` state, never `rememberSaveable`, so it is not written to saved instance state.
+- `FLAG_SECURE` is always on for the Android window. A setting to allow screenshots is not planned.
+- Screens that edit data must call `VaultController.onInteraction()` on text changes, because typing on the soft keyboard does not produce touch events and would otherwise let the idle timer lock the vault in the middle of an edit.
+
 ## Recovery limits
 
 - There is no server and no recovery service. A forgotten master password cannot be reset by anyone.

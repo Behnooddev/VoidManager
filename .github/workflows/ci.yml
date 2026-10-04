@@ -40,7 +40,7 @@ jobs:
         run: >
           ./gradlew --continue
           :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest
-          :core:security:jvmTest :core:crypto:test
+          :core:security:jvmTest :core:crypto:test :app:shared:jvmTest
       - name: Build shared modules
         if: ${{ !cancelled() }}
         run: >
@@ -50,7 +50,7 @@ jobs:
       - name: Install Android platform 37
         if: ${{ !cancelled() }}
         continue-on-error: true
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" || true
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" < <(yes) || true'
       - name: Android debug build and lint
         if: ${{ !cancelled() }}
         run: ./gradlew --continue :app:android:assembleDebug :app:android:lintDebug

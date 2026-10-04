@@ -8,6 +8,8 @@ plugins {
 
 dependencies {
     implementation(project(":app:shared"))
+    implementation(project(":core:crypto"))
+    implementation(project(":core:security"))
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutines.swing)
 }

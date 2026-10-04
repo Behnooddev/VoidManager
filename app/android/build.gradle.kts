@@ -61,10 +61,15 @@ android {
     lint {
         abortOnError = true
         checkReleaseBuilds = true
+        // Bouncy Castle ships classes for JNDI and other packages that Android does not have. They are never
+        // loaded here, because only the lightweight API (Argon2id, HKDF) is used and no provider is registered.
+        disable += "InvalidPackage"
     }
 }
 
 dependencies {
     implementation(project(":app:shared"))
+    implementation(project(":core:crypto"))
+    implementation(project(":core:security"))
     implementation(libs.androidx.activity.compose)
 }

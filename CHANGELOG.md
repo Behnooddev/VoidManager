@@ -4,6 +4,37 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-03
+
+Phase 3b-1: the vault can be created and unlocked from the app.
+
+### Added
+
+- Setup screen: master password with confirmation, strength estimate and the password policy, and an acknowledgement that a forgotten password cannot be recovered.
+- Unlock screen: wrong-password message, a growing wait after repeated failures (in memory only; see `docs/security/key-management.md`), and distinct messages for a damaged key file, a newer vault version and storage failures.
+- `VaultGateway` and `OpenedVault` (`core:data`) and `VaultService` (`core:crypto`): password in, open encrypted vault out, with every failure named.
+- `VaultFlow`: the lock state machine (setup, locked, unlocked), idle and background auto-lock, and a Lock button in the top bar.
+- Android: the vault controller lives in the `Application`, so a screen rotation does not lock it; the app locks when it goes to the background and on the idle timeout; window contents are hidden from screenshots and the recent apps overview (`FLAG_SECURE`).
+- `VmPasswordField` and secret-field support in `VmTextField` (masked input, show or hide, no autocorrect, password semantics).
+- Desktop: the vault is stored in `~/.voidmanager`; idle timeout only. This is a development convenience.
+
+### Changed
+
+- `App` now takes a `VaultController`.
+- The placeholder text no longer says the app contains the foundation only.
+- CI: the `app:shared` tests run in the unit test step; the platform 37 install step no longer reports a broken pipe.
+
+### Not included
+
+- Android Keystore and biometric device unlock (planned as 0.4.1), calibration of the Argon2id cost on the device, and the People, Personal and trash screens (3b-2, 0.5.0).
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.3.1] - 2026-10-01
 
 ### Fixed
