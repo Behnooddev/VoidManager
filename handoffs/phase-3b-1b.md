@@ -2,6 +2,10 @@
 
 Date: 2026-10-03. Version 0.4.1.
 
+## Verification update (2026-10-04, version 0.4.2)
+
+The first CI run of 0.4.1 showed that the `core` modules and their tests pass, including `KdfCalibratorTest` and the four new `VaultServiceTest` cases, and that `androidx.biometric` 1.1.0 and `androidx.fragment` 1.8.6 resolve. `app:shared` did not compile (BUG-005, fixed in 0.4.2), so the Android debug build, lint and desktop compile did not run. Nothing is confirmed yet about `AndroidDeviceKeyProvider`, the unlock button or the Settings screen beyond the type checks that the `app:shared` compiler reported none of; the device checks listed below still have not happened.
+
 ## Scope
 
 Biometric unlock on Android through the Keystore, a Settings screen to turn it on and off, and Argon2id cost fitted to the device at vault creation. The People, Personal and trash screens are still 3b-2 (0.5.0).
@@ -13,7 +17,7 @@ Biometric unlock on Android through the Keystore, a Settings screen to turn it o
 | `KdfCalibrator` (`core:crypto`) | Tested | 7 tests passed outside Gradle against a stand-in for the hash |
 | `VaultManager.create(password, params)`, `deviceUnlockEnabled()` | Written | Covered by the new service tests, not yet run |
 | `VaultService`: device unlock, disable, calibrated create | Tests written, not run | 4 new tests in `VaultServiceTest` on a real encrypted file |
-| `VaultFlow` / `VaultController` device paths | Flow tested | 28 flow tests passed outside Gradle; the controller (Compose state) is untested |
+| `VaultFlow` / `VaultController` device paths | Tested | 28 flow tests and 12 controller tests passed outside Gradle (the controller against a stand-in for Compose state) |
 | `DeviceKeyProvider` interface (`app:shared`) | Written | |
 | Unlock button and Settings screen | Not built | Compose; first compile is CI |
 | `AndroidDeviceKeyProvider` (Keystore + `BiometricPrompt`) | Not built, not run on a device | |
@@ -33,6 +37,7 @@ Biometric unlock on Android through the Keystore, a Settings screen to turn it o
 | --- | --- | --- |
 | 7 calibrator tests | Kotlin 2.4.20 compiler, outside Gradle | 7 passed |
 | 28 lock-flow tests (23 earlier plus 5 device-unlock) | Same | 28 passed |
+| 12 controller tests (0.4.2) | Same, with a stand-in for `mutableStateOf` | 12 passed |
 | ktlint 1.5.0 on every file | Authoring environment | Passed |
 | Biometric and Keystore API names and constants | Read against the androidx source in the authoring environment | Match |
 

@@ -4,6 +4,27 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-04
+
+### Fixed
+
+- BUG-005: `VaultController` passed a `Char` to `ByteArray.fill` when overwriting the device key, so `app:shared` did not compile in 0.4.1. The key is now overwritten with `fill(0)`.
+
+### Added
+
+- `VaultControllerTest` (12 tests): unlock, wrong password, device unlock, cancelled and invalidated prompts, enabling and disabling, and that the password and the device key are overwritten after use.
+
+### Changed
+
+- `MainActivity` creates its biometric key provider once instead of on every recomposition.
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.4.1] - 2026-10-03
 
 Phase 3b-1b: biometric unlock and a key derivation cost fitted to the device.

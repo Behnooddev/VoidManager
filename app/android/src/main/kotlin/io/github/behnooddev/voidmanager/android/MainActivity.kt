@@ -15,6 +15,8 @@ class MainActivity : FragmentActivity() {
     private val controller: VaultController
         get() = (application as VoidManagerApp).controller
 
+    private val deviceKeys by lazy { AndroidDeviceKeyProvider(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Keeps vault contents out of screenshots, screen recordings and the recent apps overview.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
@@ -24,7 +26,7 @@ class MainActivity : FragmentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
-        setContent { App(controller, deviceKeys = AndroidDeviceKeyProvider(this)) }
+        setContent { App(controller, deviceKeys) }
     }
 
     override fun onStart() {

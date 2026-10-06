@@ -51,7 +51,7 @@ class VaultController(
                     try {
                         withContext(worker + NonCancellable) { flow.unlockWithDeviceKey(result.bytes) }
                     } finally {
-                        result.bytes.fill(NUL)
+                        result.bytes.fill(0)
                     }
                 DeviceKeyResult.Cancelled -> Unit
                 DeviceKeyResult.Invalidated -> {
@@ -77,7 +77,7 @@ class VaultController(
                         try {
                             withContext(worker + NonCancellable) { flow.enableDeviceUnlock(result.bytes) }
                         } finally {
-                            result.bytes.fill(NUL)
+                            result.bytes.fill(0)
                         }
                     if (enabled) {
                         DeviceUnlockChange.Enabled

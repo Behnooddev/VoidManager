@@ -29,7 +29,7 @@ Every defect found in the repository is recorded here with its cause, its fix an
 - Cause: `compileSdk` was set to 36 when the versions were pinned in Phase 1. The Compose Multiplatform 1.12.1 release depends on AndroidX Compose libraries that require API 37 at compile time. The requirement was not checked when the version was chosen.
 - Fix: `android-compileSdk` is 37 in `gradle/libs.versions.toml`. `targetSdk` stays 36, because compile level and target level are independent: the compile level only decides which APIs the code may use, and the target level decides which runtime behavior changes apply.
 - Prevention: when a library version is pinned or updated, its minimum compile SDK is checked in the release notes. The CI Android step reports this class of error at once.
-- Note: the SDK platform for API 37 must be available to the build. The workflow installs it explicitly before the Android step (the step may not fail the run), because the runner image may carry older platforms only.
+- Note: the SDK platform for API 37 must be available to the build. It is already on the runner image: the 0.4.0 build did not download it, and the explicit install step that existed in 0.3.1 only logged a broken pipe, so it was removed in 0.4.1.
 
 ## BUG-004: nullable value returned from a SQLDelight query mapper
 
@@ -37,6 +37,14 @@ Every defect found in the repository is recorded here with its cause, its fix an
 - Cause: a query mapper lambda returned a nullable column (`value_cipher`). The type of a query's rows cannot be nullable.
 - Fix: the lambda returns `checkNotNull(cipher)`, which also makes the test fail clearly when the value is absent.
 - Prevention: none beyond CI. The generated query classes do not exist outside Gradle, so test code that uses them cannot be compiled in the authoring environment.
+
+## BUG-005: `Char` passed to `ByteArray.fill`
+
+- Symptom: `app:shared` did not compile (`Argument type mismatch: actual type is 'Char', but 'Byte' was expected`, `VaultController.kt` lines 54 and 80). Everything that depends on `app:shared` failed with it: its tests, the Android debug build and lint, and the desktop compile. The `core` modules and their tests, including the new calibrator and device-unlock tests, passed.
+- Cause: the overwrite constant in `VaultController` was a `Char` (right for the password `CharArray`) and was reused for the device key, which is a `ByteArray`.
+- Fix: the device key is overwritten with `fill(0)`.
+- Prevention: `VaultController` is now compiled and tested outside Gradle too, against a minimal stand-in for Compose's `mutableStateOf` (12 tests in `VaultControllerTest`, which also check that passwords and device keys are overwritten). The screens, the design system and the Android classes still cannot be compiled outside Gradle, so CI remains the first check for those.
+- Not yet seen: the compile of `app:android` (including `AndroidDeviceKeyProvider`) never ran in the 0.4.1 build because `app:shared` failed first.
 
 ## Warnings that are not defects
 
