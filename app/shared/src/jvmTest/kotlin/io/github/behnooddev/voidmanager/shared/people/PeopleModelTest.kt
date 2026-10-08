@@ -6,6 +6,7 @@ import io.github.behnooddev.voidmanager.core.data.repository.SearchRepository
 import io.github.behnooddev.voidmanager.core.model.Entity
 import io.github.behnooddev.voidmanager.core.model.EntityKind
 import io.github.behnooddev.voidmanager.core.model.FailureReason
+import io.github.behnooddev.voidmanager.core.model.FieldPart
 import io.github.behnooddev.voidmanager.core.model.FieldText
 import io.github.behnooddev.voidmanager.core.model.FieldValue
 import io.github.behnooddev.voidmanager.core.model.FieldValueInput
@@ -122,7 +123,10 @@ private class MemoryFields : FieldValueRepository {
         sensitivity = Sensitivity.Personal,
         sharingPolicy = SharingPolicy.Inherit,
         metadata = null,
-        parts = emptyList(),
+        parts =
+            input.parts.map { (key, text) ->
+                FieldPart(key, FieldText(text, key == "password"), Sensitivity.Personal)
+            },
         createdAt = counter.toLong(),
         updatedAt = counter.toLong(),
     )
@@ -242,6 +246,47 @@ class PeopleModelTest {
 
             assertTrue(model.deleteField(id, valueId))
             assertTrue(model.profile!!.isEmpty)
+        }
+
+    @Test
+    fun aCompositeValueIsStoredByPartsAndShownAsParts() =
+        runBlocking {
+            val id = add("A")
+            val input =
+                FieldValueInput(
+                    "sys.account",
+                    parts = mapOf("service" to "Mail", "password" to "hunter2"),
+                    isPrimary = true,
+                )
+            assertTrue(model.saveField(id, null, input))
+            val row =
+                model.profile!!
+                    .sections
+                    .single()
+                    .rows
+                    .single()
+            assertNull(row.text)
+            assertEquals(listOf("service", "password"), row.parts.map { it.key })
+            assertTrue(row.isProtected)
+        }
+
+    @Test
+    fun makingAValuePrimaryKeepsItsContentAndMovesThePrimaryMark() =
+        runBlocking {
+            val id = add("A")
+            model.saveField(id, null, FieldValueInput("sys.phone", value = "5550100", isPrimary = true))
+            model.saveField(id, null, FieldValueInput("sys.phone", value = "5550101"))
+            val second =
+                model.profile!!
+                    .sections
+                    .single()
+                    .rows
+                    .first { !it.isPrimary }
+
+            assertTrue(model.makePrimary(id, second))
+            val stored = fields.get(second.valueId)!!
+            assertTrue(stored.isPrimary)
+            assertEquals("5550101", stored.value?.reveal())
         }
 
     @Test

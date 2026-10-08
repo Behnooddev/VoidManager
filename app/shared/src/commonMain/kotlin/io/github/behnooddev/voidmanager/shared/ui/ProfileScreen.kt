@@ -30,11 +30,11 @@ import io.github.behnooddev.voidmanager.shared.resources.profile_edit
 import io.github.behnooddev.voidmanager.shared.resources.profile_empty
 import io.github.behnooddev.voidmanager.shared.resources.profile_favorite
 import io.github.behnooddev.voidmanager.shared.resources.profile_hide
+import io.github.behnooddev.voidmanager.shared.resources.profile_make_primary
 import io.github.behnooddev.voidmanager.shared.resources.profile_move_trash
 import io.github.behnooddev.voidmanager.shared.resources.profile_not_found
 import io.github.behnooddev.voidmanager.shared.resources.profile_other_field
 import io.github.behnooddev.voidmanager.shared.resources.profile_primary
-import io.github.behnooddev.voidmanager.shared.resources.profile_protected_parts
 import io.github.behnooddev.voidmanager.shared.resources.profile_rename
 import io.github.behnooddev.voidmanager.shared.resources.profile_show
 import io.github.behnooddev.voidmanager.shared.resources.profile_unfavorite
@@ -107,6 +107,15 @@ internal fun ProfileScreen(
                             if (row.valueId in revealed) revealed - row.valueId else revealed + row.valueId
                     },
                     onEdit = { onEditField(row.valueId) },
+                    onMakePrimary =
+                        if (!row.isPrimary &&
+                            row.definition?.allowsMultiple == true &&
+                            section.rows.count { it.definitionId == row.definitionId } > 1
+                        ) {
+                            { scope.launch { model.makePrimary(entity.id, row) } }
+                        } else {
+                            null
+                        },
                 )
             }
         }
@@ -135,9 +144,9 @@ private fun ProfileRowCard(
     shown: Boolean,
     onToggle: () -> Unit,
     onEdit: () -> Unit,
+    onMakePrimary: (() -> Unit)?,
 ) {
     val title = row.label ?: row.definition?.defaultLabel ?: stringResource(Res.string.profile_other_field)
-    val masked = row.isProtected && !shown
     VmSurface(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(VmSpacing.md),
@@ -150,20 +159,22 @@ private fun ProfileRowCard(
             val value = row.text
             if (value != null) {
                 BasicText(
-                    text = if (masked && value.isProtected) HIDDEN_VALUE else value.reveal(),
+                    text = if (value.isProtected && !shown) HIDDEN_VALUE else value.reveal(),
+                    style = VmTheme.typography.body.copy(color = VmTheme.colors.textPrimary),
+                )
+            }
+            for (part in row.parts) {
+                BasicText(
+                    text = "${partLabel(
+                        part.key,
+                    )}: ${if (part.text.isProtected && !shown) HIDDEN_VALUE else part.text.reveal()}",
                     style = VmTheme.typography.body.copy(color = VmTheme.colors.textPrimary),
                 )
             }
             val note = row.note
             if (note != null) {
                 BasicText(
-                    text = if (masked && note.isProtected) HIDDEN_VALUE else note.reveal(),
-                    style = VmTheme.typography.caption.copy(color = VmTheme.colors.textSecondary),
-                )
-            }
-            if (row.hiddenParts > 0) {
-                BasicText(
-                    text = stringResource(Res.string.profile_protected_parts, row.hiddenParts),
+                    text = if (note.isProtected && !shown) HIDDEN_VALUE else note.reveal(),
                     style = VmTheme.typography.caption.copy(color = VmTheme.colors.textSecondary),
                 )
             }
@@ -179,6 +190,13 @@ private fun ProfileRowCard(
                     VmButton(
                         text = stringResource(Res.string.profile_edit),
                         onClick = onEdit,
+                        style = VmButtonStyle.Text,
+                    )
+                }
+                if (onMakePrimary != null) {
+                    VmButton(
+                        text = stringResource(Res.string.profile_make_primary),
+                        onClick = onMakePrimary,
                         style = VmButtonStyle.Text,
                     )
                 }

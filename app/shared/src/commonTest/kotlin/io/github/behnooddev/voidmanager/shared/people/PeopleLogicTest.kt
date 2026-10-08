@@ -5,6 +5,7 @@ import io.github.behnooddev.voidmanager.core.model.EntityKind
 import io.github.behnooddev.voidmanager.core.model.FieldDataType
 import io.github.behnooddev.voidmanager.core.model.FieldDefinition
 import io.github.behnooddev.voidmanager.core.model.FieldPart
+import io.github.behnooddev.voidmanager.core.model.FieldRegistry
 import io.github.behnooddev.voidmanager.core.model.FieldSection
 import io.github.behnooddev.voidmanager.core.model.FieldText
 import io.github.behnooddev.voidmanager.core.model.FieldValue
@@ -89,15 +90,11 @@ class FieldInputTest {
     }
 
     @Test
-    fun compositeFieldsAreNotEditableYet() {
-        val card =
-            io.github.behnooddev.voidmanager.core.model.FieldRegistry
-                .bySystemKey("card")
-        assertTrue(card != null && !FieldInput.isEditable(card))
-        val phone =
-            io.github.behnooddev.voidmanager.core.model.FieldRegistry
-                .bySystemKey("phone")
-        assertTrue(phone != null && FieldInput.isEditable(phone))
+    fun compositeFieldsAreEditablePartByPart() {
+        for (key in listOf("card", "account", "address", "work", "education", "phone")) {
+            val definition = FieldRegistry.bySystemKey(key)
+            assertTrue(definition != null && FieldInput.isEditable(definition), key)
+        }
     }
 
     @Test
@@ -181,27 +178,72 @@ class ProfileBuilderTest {
         assertEquals("0123456789", row.text?.reveal())
     }
 
+    private fun account(): FieldValue =
+        value("v1", "sys.account", null).copy(
+            parts =
+                listOf(
+                    FieldPart("password", FieldText("hunter2", true), Sensitivity.Secret),
+                    FieldPart("username", FieldText("someone", false), Sensitivity.Personal),
+                    FieldPart("service", FieldText("Mail", false), Sensitivity.Personal),
+                ),
+        )
+
     @Test
-    fun aCompositeValueShowsOnlyItsUnprotectedPartsAndCountsTheRest() {
-        val account =
-            value("v1", "sys.account", null).copy(
-                parts =
-                    listOf(
-                        FieldPart("service", FieldText("Mail", false), Sensitivity.Personal),
-                        FieldPart("username", FieldText("someone", false), Sensitivity.Personal),
-                        FieldPart("password", FieldText("hunter2", true), Sensitivity.Secret),
-                    ),
-            )
+    fun aCompositeValueListsItsPartsInDefinitionOrderAndKeepsProtectedPartsMasked() {
         val row =
             ProfileBuilder
-                .build(entity, listOf(account))
+                .build(entity, listOf(account()))
                 .sections
                 .single()
                 .rows
                 .single()
-        assertEquals("Mail, someone", row.text?.reveal())
-        assertEquals(1, row.hiddenParts)
-        assertFalse(row.canEdit)
+        assertNull(row.text)
+        assertEquals(listOf("service", "username", "password"), row.parts.map { it.key })
+        assertTrue(row.isProtected)
+        assertEquals(
+            FieldText.MASK,
+            row.parts
+                .last()
+                .text
+                .toString(),
+        )
+        assertEquals(
+            "hunter2",
+            row.parts
+                .last()
+                .text
+                .reveal(),
+        )
+        assertTrue(row.canEdit)
+    }
+
+    @Test
+    fun aRowCanBeStoredAgainWithOnlyThePrimaryMarkChanged() {
+        val row =
+            ProfileBuilder
+                .build(entity, listOf(account()))
+                .sections
+                .single()
+                .rows
+                .single()
+        val input = row.toInput(isPrimary = true)
+        assertTrue(input.isPrimary)
+        assertNull(input.value)
+        assertEquals(mapOf("service" to "Mail", "username" to "someone", "password" to "hunter2"), input.parts)
+        assertEquals(row.sensitivity, input.sensitivity)
+
+        val scalar =
+            ProfileBuilder
+                .build(
+                    entity,
+                    listOf(value("v2", "sys.phone", "5550100")),
+                ).sections
+                .single()
+                .rows
+                .single()
+        val scalarInput = scalar.toInput(isPrimary = false)
+        assertEquals("5550100", scalarInput.value)
+        assertTrue(scalarInput.parts.isEmpty())
     }
 
     @Test

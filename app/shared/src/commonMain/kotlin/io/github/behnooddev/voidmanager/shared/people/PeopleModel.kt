@@ -142,6 +142,12 @@ class PeopleModel(
         return saved != null
     }
 
+    /** Marks a value as the primary one of its field; the repository clears the mark on the others. */
+    suspend fun makePrimary(
+        entityId: String,
+        row: ProfileRow,
+    ): Boolean = saveField(entityId, row.valueId, row.toInput(isPrimary = true))
+
     suspend fun deleteField(
         entityId: String,
         valueId: String,

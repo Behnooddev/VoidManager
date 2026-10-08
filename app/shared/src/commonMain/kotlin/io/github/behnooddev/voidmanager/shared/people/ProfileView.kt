@@ -6,14 +6,21 @@ import io.github.behnooddev.voidmanager.core.model.FieldRegistry
 import io.github.behnooddev.voidmanager.core.model.FieldSection
 import io.github.behnooddev.voidmanager.core.model.FieldText
 import io.github.behnooddev.voidmanager.core.model.FieldValue
+import io.github.behnooddev.voidmanager.core.model.FieldValueInput
 import io.github.behnooddev.voidmanager.core.model.Sensitivity
 import io.github.behnooddev.voidmanager.core.model.SharingPolicy
+
+/** One filled part of a composite value. [text] prints as a mask when the part is protected. */
+data class PartRow(
+    val key: String,
+    val text: FieldText,
+    val sensitivity: Sensitivity,
+)
 
 /**
  * One value on a profile. [text] is a [FieldText], which prints as a mask when the value is
  * protected; the screen reads the real text only after the user asks to reveal it.
- * For a composite value (address, card, account) [text] joins the parts that are not protected and
- * [hiddenParts] counts the protected parts that are left out.
+ * A composite value (address, card, account, work, education) has no [text]; its filled parts are in [parts].
  */
 data class ProfileRow(
     val valueId: String,
@@ -23,14 +30,17 @@ data class ProfileRow(
     val text: FieldText?,
     val note: FieldText?,
     val isPrimary: Boolean,
-    val hiddenParts: Int,
+    val parts: List<PartRow>,
     /** Kept so that editing a value does not reset what the user set on it. */
     val sensitivity: Sensitivity,
     val sharingPolicy: SharingPolicy,
     val sortOrder: Int,
     val metadata: String?,
 ) {
-    val isProtected: Boolean get() = text?.isProtected == true || note?.isProtected == true
+    val isProtected: Boolean get() =
+        text?.isProtected == true ||
+            note?.isProtected == true ||
+            parts.any { it.text.isProtected }
     val canEdit: Boolean get() = definition != null && FieldInput.isEditable(definition)
 }
 
@@ -72,24 +82,20 @@ object ProfileBuilder {
 
     private fun toRow(value: FieldValue): ProfileRow {
         val definition = BY_ID[value.definitionId]
-        val visibleParts = value.parts.filter { it.value != null && it.value?.isProtected == false }
-        val text =
-            if (definition?.isComposite == true) {
-                val joined = visibleParts.joinToString(", ") { it.value?.reveal().orEmpty() }
-                if (joined.isEmpty()) null else FieldText(joined, isProtected = false)
-            } else {
-                value.value
-            }
-        val hidden = if (definition?.isComposite == true) value.parts.count { it.value?.isProtected == true } else 0
+        val order = definition?.parts?.map { it.key }.orEmpty()
+        val parts =
+            value.parts
+                .mapNotNull { part -> part.value?.let { PartRow(part.key, it, part.sensitivity) } }
+                .sortedBy { part -> order.indexOf(part.key).let { if (it < 0) order.size else it } }
         return ProfileRow(
             valueId = value.id,
             definitionId = value.definitionId,
             definition = definition,
             label = value.label,
-            text = text,
+            text = if (parts.isEmpty()) value.value else null,
             note = value.note,
             isPrimary = value.isPrimary,
-            hiddenParts = hidden,
+            parts = parts,
             sensitivity = value.sensitivity,
             sharingPolicy = value.sharingPolicy,
             sortOrder = value.sortOrder,
@@ -97,3 +103,21 @@ object ProfileBuilder {
         )
     }
 }
+
+/**
+ * The input that stores this row again, for changes that touch only a flag such as the primary mark.
+ * It reads protected text, so it is meant for a call that goes straight to the repository.
+ */
+fun ProfileRow.toInput(isPrimary: Boolean): FieldValueInput =
+    FieldValueInput(
+        definitionId = definitionId,
+        label = label,
+        value = if (parts.isEmpty()) text?.reveal() else null,
+        note = note?.reveal(),
+        isPrimary = isPrimary,
+        sortOrder = sortOrder,
+        sensitivity = sensitivity,
+        sharingPolicy = sharingPolicy,
+        metadata = metadata,
+        parts = parts.associate { it.key to it.text.reveal() },
+    )

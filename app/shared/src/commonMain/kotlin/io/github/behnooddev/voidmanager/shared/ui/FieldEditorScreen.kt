@@ -14,13 +14,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmButton
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmButtonStyle
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmListItem
+import io.github.behnooddev.voidmanager.core.designsystem.components.VmPasswordField
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmTextField
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmTheme
 import io.github.behnooddev.voidmanager.core.model.FieldDataType
 import io.github.behnooddev.voidmanager.core.model.FieldDefinition
 import io.github.behnooddev.voidmanager.core.model.FieldRegistry
 import io.github.behnooddev.voidmanager.core.model.FieldValueInput
+import io.github.behnooddev.voidmanager.core.model.Sensitivity
 import io.github.behnooddev.voidmanager.core.model.SharingPolicy
+import io.github.behnooddev.voidmanager.shared.people.CompositeInput
 import io.github.behnooddev.voidmanager.shared.people.FieldInput
 import io.github.behnooddev.voidmanager.shared.people.PeopleModel
 import io.github.behnooddev.voidmanager.shared.people.ProfileRow
@@ -36,6 +39,8 @@ import io.github.behnooddev.voidmanager.shared.resources.field_note
 import io.github.behnooddev.voidmanager.shared.resources.field_pick
 import io.github.behnooddev.voidmanager.shared.resources.field_value
 import io.github.behnooddev.voidmanager.shared.resources.loading
+import io.github.behnooddev.voidmanager.shared.resources.password_hide
+import io.github.behnooddev.voidmanager.shared.resources.password_show
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -110,28 +115,34 @@ private fun FieldForm(
 
     // Plain remember: the text of a protected value must not be written to saved state.
     var label by remember(existing?.valueId) { mutableStateOf(existing?.label.orEmpty()) }
-    var value by remember(existing?.valueId) { mutableStateOf(existing?.text?.reveal().orEmpty()) }
+    var scalar by remember(existing?.valueId) { mutableStateOf(existing?.text?.reveal().orEmpty()) }
+    var parts by remember(existing?.valueId) {
+        mutableStateOf(existing?.parts?.associate { it.key to it.text.reveal() } ?: emptyMap())
+    }
     var note by remember(existing?.valueId) { mutableStateOf(existing?.note?.reveal().orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
 
-    val issue = FieldInput.validate(definition.dataType, value)
-    val issueText = issue?.let { fieldIssueText(it) }
+    val composite = definition.isComposite
+    val scalarIssue = if (composite) null else FieldInput.validate(definition.dataType, scalar)
+    val partIssues = if (composite) CompositeInput.issues(definition, parts) else emptyMap()
+    val canSave = if (composite) CompositeInput.canSave(definition, parts) else scalarIssue == null
 
     fun save() {
-        if (saving || issue != null) return
+        if (saving || !canSave) return
         saving = true
         val input =
             FieldValueInput(
                 definitionId = definition.id,
                 label = label.trim().ifEmpty { null },
-                value = value.trim(),
+                value = if (composite) null else scalar.trim(),
                 note = note.trim().ifEmpty { null },
                 isPrimary = becomesPrimary,
                 sortOrder = existing?.sortOrder ?: 0,
                 sensitivity = existing?.sensitivity,
                 sharingPolicy = existing?.sharingPolicy ?: SharingPolicy.Inherit,
                 metadata = existing?.metadata,
+                parts = if (composite) CompositeInput.cleaned(definition, parts) else emptyMap(),
             )
         scope.launch {
             if (model.saveField(entityId, existing?.valueId, input)) onDone() else saving = false
@@ -148,17 +159,47 @@ private fun FieldForm(
             },
             label = stringResource(Res.string.field_label),
         )
-        VmTextField(
-            value = value,
-            onValueChange = {
-                value = it
-                onActivity()
-            },
-            label = stringResource(Res.string.field_value),
-            singleLine = definition.dataType != FieldDataType.Multiline,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardFor(definition.dataType)),
-        )
-        if (issueText != null && value.isNotBlank()) StatusText(issueText, VmTheme.colors.warning)
+        if (composite) {
+            for (part in definition.parts) {
+                val text = parts[part.key].orEmpty()
+                val onChange: (String) -> Unit = {
+                    parts = parts + (part.key to it)
+                    onActivity()
+                }
+                if (part.sensitivity == Sensitivity.Secret) {
+                    VmPasswordField(
+                        value = text,
+                        onValueChange = onChange,
+                        label = partLabel(part.key),
+                        showLabel = stringResource(Res.string.password_show),
+                        hideLabel = stringResource(Res.string.password_hide),
+                    )
+                } else {
+                    VmTextField(
+                        value = text,
+                        onValueChange = onChange,
+                        label = partLabel(part.key),
+                        keyboardOptions = KeyboardOptions(keyboardType = keyboardForPart(part.key)),
+                    )
+                }
+                partIssues[part.key]?.let { issue ->
+                    fieldIssueText(issue)?.let { StatusText(it, VmTheme.colors.warning) }
+                }
+            }
+        } else {
+            VmTextField(
+                value = scalar,
+                onValueChange = {
+                    scalar = it
+                    onActivity()
+                },
+                label = stringResource(Res.string.field_value),
+                singleLine = definition.dataType != FieldDataType.Multiline,
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardFor(definition.dataType)),
+            )
+            val issueText = scalarIssue?.let { fieldIssueText(it) }
+            if (issueText != null && scalar.isNotBlank()) StatusText(issueText, VmTheme.colors.warning)
+        }
         VmTextField(
             value = note,
             onValueChange = {
@@ -172,7 +213,7 @@ private fun FieldForm(
             text = stringResource(Res.string.action_save),
             onClick = ::save,
             modifier = Modifier.fillMaxWidth(),
-            enabled = issue == null && !saving,
+            enabled = canSave && !saving,
         )
         if (existing != null) {
             VmButton(
@@ -190,6 +231,15 @@ private fun FieldForm(
         }
     }
 }
+
+private fun keyboardForPart(key: String): KeyboardType =
+    when (key) {
+        "phone" -> KeyboardType.Phone
+        "email" -> KeyboardType.Email
+        "website" -> KeyboardType.Uri
+        "number", "postal_code" -> KeyboardType.Number
+        else -> KeyboardType.Text
+    }
 
 private fun keyboardFor(type: FieldDataType): KeyboardType =
     when (type) {

@@ -12,6 +12,12 @@ enum class FieldIssue {
     InvalidNumber,
     InvalidDate,
     InvalidUrl,
+    InvalidPartialDate,
+    InvalidExpiry,
+    InvalidCardNumber,
+    InvalidIban,
+    InvalidCvv,
+    InvalidPin,
 }
 
 /** Which fields the editor offers and whether typed text is acceptable. */
@@ -36,9 +42,9 @@ object FieldInput {
     private val PHONE_EXTRAS = setOf(' ', '+', '-', '(', ')', '.')
     private val DAYS_IN_MONTH = intArrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
-    /** Composite fields (address, card, account, work, education) are not editable yet. */
+    /** Composite fields (address, card, account, work, education) are edited part by part, see [CompositeInput]. */
     fun isEditable(definition: FieldDefinition): Boolean =
-        !definition.isComposite && definition.dataType in EDITABLE_TYPES
+        definition.isComposite || definition.dataType in EDITABLE_TYPES
 
     /** Fields that can be added now: editable ones, minus single-value fields that already have a value. */
     fun addable(existing: List<FieldValue>): List<FieldDefinition> {

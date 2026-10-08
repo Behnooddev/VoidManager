@@ -87,7 +87,7 @@
   <string name="profile_hide">Hide</string>
   <string name="profile_edit">Edit</string>
   <string name="profile_primary">Primary</string>
-  <string name="profile_protected_parts">%1$d protected parts are not shown</string>
+  <string name="profile_make_primary">Make primary</string>
   <string name="profile_other_field">Other</string>
   <string name="profile_not_found">This profile is not available.</string>
 
@@ -133,4 +133,38 @@
   <string name="section_dates">Dates</string>
   <string name="section_notes">Notes</string>
   <string name="section_custom">Other</string>
+
+  <string name="field_issue_partial_date">Use YYYY, YYYY-MM or YYYY-MM-DD.</string>
+  <string name="field_issue_expiry">Use the format MM/YY, for example 04/29.</string>
+  <string name="field_issue_card_number">A card number has 12 to 19 digits.</string>
+  <string name="field_issue_iban">Start with two letters, then letters and digits only.</string>
+  <string name="field_issue_cvv">A security code has 3 or 4 digits.</string>
+  <string name="field_issue_pin">A PIN has 4 to 12 digits.</string>
+
+  <string name="part_service">Service</string>
+  <string name="part_website">Website</string>
+  <string name="part_username">Username</string>
+  <string name="part_password">Password</string>
+  <string name="part_recovery">Recovery data</string>
+  <string name="part_holder">Card holder</string>
+  <string name="part_bank">Bank</string>
+  <string name="part_number">Card number</string>
+  <string name="part_expiry">Expiry (MM/YY)</string>
+  <string name="part_iban">IBAN or Sheba</string>
+  <string name="part_cvv2">CVV2</string>
+  <string name="part_pin">PIN</string>
+  <string name="part_street">Street</string>
+  <string name="part_city">City</string>
+  <string name="part_region">Region</string>
+  <string name="part_postal_code">Postal code</string>
+  <string name="part_country">Country</string>
+  <string name="part_company">Company</string>
+  <string name="part_role">Role</string>
+  <string name="part_phone">Phone</string>
+  <string name="part_email">Email</string>
+  <string name="part_institution">Institution</string>
+  <string name="part_field">Field of study</string>
+  <string name="part_degree">Degree</string>
+  <string name="part_start_date">Start date</string>
+  <string name="part_end_date">End date</string>
 </resources>

@@ -4,6 +4,35 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-09
+
+Phase 4a: composite values can be edited, and a field with several values can have its primary one chosen.
+
+### Added
+
+- Editing of address, account, bank card, work and education values, part by part. Parts at the highest protection level (account password and recovery data, card CVV2 and PIN) use a masked field with Show and Hide.
+- Part validation for typing mistakes: card number (12 to 19 digits, spaces and dashes allowed), expiry (`MM/YY`), IBAN or Sheba (two letters, then letters and digits; check digits are not verified), CVV2, PIN, and the phone, email and website parts. Education dates accept `YYYY`, `YYYY-MM` or `YYYY-MM-DD`. Every part is optional but a value needs at least one filled part.
+- The profile lists every filled part of a composite value with its label. Protected parts are masked until Show is pressed, per value.
+- Make primary on a value when its field has several values.
+- 12 new tests (composite validation, part rows, storing a row again, composite save through the model, make primary).
+
+### Changed
+
+- Composite values are no longer shown as a joined line with a count of hidden parts; each part is listed.
+- Editing a value still keeps its protection level, sharing policy, order and metadata.
+
+### Not included
+
+- Custom field definitions, hiding or renaming built-in fields, and a way to raise the protection level of a value (4b).
+- Relationships, photos and tags.
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.5.0] - 2026-10-08
 
 Phase 3b-2: People, Personal, Quick Add, profiles and Trash.
