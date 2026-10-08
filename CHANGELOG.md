@@ -4,6 +4,40 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-08
+
+Phase 3b-2: People, Personal, Quick Add, profiles and Trash.
+
+### Added
+
+- People tab: list with search, a Favorites section, Quick Add and a link to Trash.
+- Quick Add: a name, and optionally a phone number, an email and a note. Filled fields are validated; the phone and email become the primary values.
+- Profile: values grouped by section, with the primary value first. Values at protection level 2 and 3 stay masked until Show is pressed. Add, edit and delete a value; rename; favorite; move to Trash.
+- Personal tab: the Personal profile (created on first use) with the same editing, and no Trash action.
+- Trash: restore, or delete forever after a confirmation.
+- Field editor for single-line and multi-line text, number, date (`YYYY-MM-DD`), web address, phone and email values, with a label, a note and per-type validation. Phone numbers accept Persian and Arabic-Indic digits.
+- Back handling: the Android back action returns to the previous screen inside a tab before it leaves the app. The screen position survives a rotation.
+- `PeopleModel`, `PeopleRoute`, `QuickAdd`, `FieldInput` and `ProfileBuilder` in `app:shared`; `VmListItem` in the design system; `BackDispatcher`.
+- 29 tests for the new logic (routes, validation, quick add, profile building and the model against in-memory repositories).
+
+### Changed
+
+- Typing in any text field counts as activity, so the idle timer does not lock the vault in the middle of an edit.
+- A stale search result can no longer replace the result of what was typed afterwards.
+
+### Not included
+
+- Editing composite values (address, card, account, work, education); they are shown read-only with the protected parts left out.
+- Relationships, photos, tags, custom field definitions, and a way to raise the protection level of a value.
+- Permanent deletion of single values has no Trash; deleting a value is immediate after a second confirming tap.
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.4.2] - 2026-10-04
 
 ### Fixed

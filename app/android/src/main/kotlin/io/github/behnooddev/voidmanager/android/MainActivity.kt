@@ -3,11 +3,13 @@ package io.github.behnooddev.voidmanager.android
 import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.FragmentActivity
 import io.github.behnooddev.voidmanager.shared.App
+import io.github.behnooddev.voidmanager.shared.BackDispatcher
 import io.github.behnooddev.voidmanager.shared.vault.VaultController
 
 /** A FragmentActivity, because the biometric prompt is shown through a fragment. */
@@ -16,6 +18,19 @@ class MainActivity : FragmentActivity() {
         get() = (application as VoidManagerApp).controller
 
     private val deviceKeys by lazy { AndroidDeviceKeyProvider(this) }
+
+    private val backDispatcher = BackDispatcher()
+
+    // Back goes to the screen that is showing; when none handles it, the system does what it normally does.
+    private val backCallback =
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (backDispatcher.dispatch()) return
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Keeps vault contents out of screenshots, screen recordings and the recent apps overview.
@@ -26,7 +41,8 @@ class MainActivity : FragmentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
-        setContent { App(controller, deviceKeys) }
+        onBackPressedDispatcher.addCallback(this, backCallback)
+        setContent { App(controller, deviceKeys, backDispatcher) }
     }
 
     override fun onStart() {

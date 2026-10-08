@@ -53,4 +53,84 @@
   <string name="settings_biometric_disable">Turn off</string>
   <string name="settings_biometric_failed">Biometric unlock could not be turned on.</string>
   <string name="settings_biometric_note">Your password still works and is needed if your biometrics change.</string>
+
+  <string name="action_back">Back</string>
+  <string name="action_cancel">Cancel</string>
+  <string name="action_save">Save</string>
+  <string name="loading">Loading…</string>
+  <string name="dismiss">Dismiss</string>
+
+  <string name="people_search">Search people</string>
+  <string name="people_add">Quick Add</string>
+  <string name="people_trash">Trash</string>
+  <string name="people_favorites">Favorites</string>
+  <string name="people_all">All people</string>
+  <string name="people_empty_title">No people yet</string>
+  <string name="people_empty_message">Add the first person with Quick Add.</string>
+  <string name="people_no_results">No one matches this search.</string>
+
+  <string name="quickadd_title">Quick Add</string>
+  <string name="quickadd_name">Name</string>
+  <string name="quickadd_phone">Phone (optional)</string>
+  <string name="quickadd_email">Email (optional)</string>
+  <string name="quickadd_note">Note (optional)</string>
+  <string name="quickadd_phone_invalid">Enter a valid phone number.</string>
+  <string name="quickadd_email_invalid">Enter a valid email address.</string>
+
+  <string name="profile_favorite">Add to favorites</string>
+  <string name="profile_unfavorite">Remove from favorites</string>
+  <string name="profile_rename">Rename</string>
+  <string name="profile_add_field">Add a field</string>
+  <string name="profile_move_trash">Move to Trash</string>
+  <string name="profile_empty">Nothing saved yet.</string>
+  <string name="profile_show">Show</string>
+  <string name="profile_hide">Hide</string>
+  <string name="profile_edit">Edit</string>
+  <string name="profile_primary">Primary</string>
+  <string name="profile_protected_parts">%1$d protected parts are not shown</string>
+  <string name="profile_other_field">Other</string>
+  <string name="profile_not_found">This profile is not available.</string>
+
+  <string name="field_new_title">Add a field</string>
+  <string name="field_edit_title">Edit field</string>
+  <string name="field_pick">Choose what to add</string>
+  <string name="field_none_left">Every field that can be added is already on this profile.</string>
+  <string name="field_label">Label (optional)</string>
+  <string name="field_value">Value</string>
+  <string name="field_note">Note (optional)</string>
+  <string name="field_delete">Delete this value</string>
+  <string name="field_delete_confirm">Delete this value for good</string>
+  <string name="field_issue_phone">Enter a valid phone number.</string>
+  <string name="field_issue_email">Enter a valid email address.</string>
+  <string name="field_issue_number">Use digits only.</string>
+  <string name="field_issue_date">Use the format YYYY-MM-DD, for example 1990-04-23.</string>
+  <string name="field_issue_url">A web address cannot contain spaces.</string>
+
+  <string name="rename_title">Rename</string>
+  <string name="rename_name">Name</string>
+
+  <string name="trash_title">Trash</string>
+  <string name="trash_empty">Trash is empty.</string>
+  <string name="trash_restore">Restore</string>
+  <string name="trash_delete">Delete forever</string>
+  <string name="trash_delete_confirm">Delete forever. This cannot be undone.</string>
+
+  <string name="problem_not_found">This item no longer exists.</string>
+  <string name="problem_invalid">That could not be saved. Check the values.</string>
+  <string name="problem_conflict">That field allows only one value and already has one.</string>
+  <string name="problem_not_allowed">This action is not allowed here.</string>
+  <string name="problem_storage">The vault could not be read or written. If it was locked, unlock it and try again.</string>
+  <string name="problem_partial">The person was saved, but some values were not. Add them from the profile.</string>
+
+  <string name="section_identity">Identity</string>
+  <string name="section_contact">Contact</string>
+  <string name="section_social">Social</string>
+  <string name="section_accounts">Accounts</string>
+  <string name="section_financial">Financial</string>
+  <string name="section_address">Address</string>
+  <string name="section_work">Work</string>
+  <string name="section_education">Education</string>
+  <string name="section_dates">Dates</string>
+  <string name="section_notes">Notes</string>
+  <string name="section_custom">Other</string>
 </resources>

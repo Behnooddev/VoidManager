@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import io.github.behnooddev.voidmanager.core.data.VaultRepositories
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmButton
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmButtonStyle
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmEmptyState
@@ -29,6 +31,7 @@ import io.github.behnooddev.voidmanager.core.designsystem.components.VmNavigatio
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmTopBar
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmTheme
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VoidManagerTheme
+import io.github.behnooddev.voidmanager.shared.people.PeopleModel
 import io.github.behnooddev.voidmanager.shared.resources.Res
 import io.github.behnooddev.voidmanager.shared.resources.action_lock
 import io.github.behnooddev.voidmanager.shared.resources.nav_home
@@ -37,6 +40,7 @@ import io.github.behnooddev.voidmanager.shared.resources.nav_personal
 import io.github.behnooddev.voidmanager.shared.resources.nav_settings
 import io.github.behnooddev.voidmanager.shared.resources.placeholder_message
 import io.github.behnooddev.voidmanager.shared.resources.placeholder_title
+import io.github.behnooddev.voidmanager.shared.ui.PeopleHost
 import io.github.behnooddev.voidmanager.shared.ui.SettingsScreen
 import io.github.behnooddev.voidmanager.shared.ui.SetupScreen
 import io.github.behnooddev.voidmanager.shared.ui.UnlockScreen
@@ -56,7 +60,9 @@ private const val AUTO_LOCK_TICK_MILLIS = 1_000L
 fun App(
     controller: VaultController,
     deviceKeys: DeviceKeyProvider? = null,
+    backDispatcher: BackDispatcher? = null,
 ) {
+    val back = backDispatcher ?: remember { BackDispatcher() }
     VoidManagerTheme {
         LaunchedEffect(controller) {
             while (true) {
@@ -81,10 +87,10 @@ fun App(
                         false
                     },
         ) {
-            when (controller.stage) {
+            when (val stage = controller.stage) {
                 Stage.NeedsSetup -> SetupScreen(controller)
                 Stage.Locked -> UnlockScreen(controller, deviceKeys)
-                is Stage.Unlocked -> AppShell(controller, deviceKeys)
+                is Stage.Unlocked -> AppShell(controller, deviceKeys, back, stage.vault.repositories)
             }
         }
     }
@@ -94,7 +100,11 @@ fun App(
 private fun AppShell(
     controller: VaultController,
     deviceKeys: DeviceKeyProvider?,
+    back: BackDispatcher,
+    repositories: VaultRepositories,
 ) {
+    // One model per unlocked vault. It is dropped with the vault when the app locks.
+    val model = remember(repositories) { PeopleModel(repositories.entities, repositories.fields, repositories.search) }
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
     val destinations = Destination.entries
     val items = destinations.map { VmNavItem(label = destinationLabel(it), icon = it.icon) }
@@ -109,11 +119,25 @@ private fun AppShell(
         if (maxWidth >= EXPANDED_WIDTH_DP.dp) {
             Row(Modifier.fillMaxSize()) {
                 VmNavigationRail(items = items, selectedIndex = selectedIndex, onSelect = { selectedIndex = it })
-                DestinationContent(destinations[selectedIndex], controller, deviceKeys, Modifier.weight(1f))
+                DestinationContent(
+                    destinations[selectedIndex],
+                    controller,
+                    deviceKeys,
+                    model,
+                    back,
+                    Modifier.weight(1f),
+                )
             }
         } else {
             Column(Modifier.fillMaxSize()) {
-                DestinationContent(destinations[selectedIndex], controller, deviceKeys, Modifier.weight(1f))
+                DestinationContent(
+                    destinations[selectedIndex],
+                    controller,
+                    deviceKeys,
+                    model,
+                    back,
+                    Modifier.weight(1f),
+                )
                 VmNavigationBar(items = items, selectedIndex = selectedIndex, onSelect = { selectedIndex = it })
             }
         }
@@ -125,8 +149,22 @@ private fun DestinationContent(
     destination: Destination,
     controller: VaultController,
     deviceKeys: DeviceKeyProvider?,
+    model: PeopleModel,
+    back: BackDispatcher,
     modifier: Modifier = Modifier,
 ) {
+    if (destination == Destination.People || destination == Destination.Personal) {
+        Column(modifier) {
+            PeopleHost(
+                model = model,
+                personal = destination == Destination.Personal,
+                back = back,
+                onLock = controller::lock,
+                onActivity = controller::onInteraction,
+            )
+        }
+        return
+    }
     Column(modifier) {
         VmTopBar(
             title = destinationLabel(destination),

@@ -13,7 +13,7 @@ Each phase ends with a report stating, per feature, whether it is designed, scaf
 | 3a | Crypto and key management foundation, lock logic, password policy | Key hierarchy tests against published vectors, lock behavior tests (done in the authoring environment; integration test pending) |
 | 3b-1 | Setup and unlock screens, vault service, auto-lock wiring, lock on background (0.4.0) | Lock-flow tests pass; CI Android build green; create, lock and unlock verified on a device |
 | 3b-1b | Android Keystore device unlock with biometric prompt, Argon2id cost fitted to the device (0.4.1) | Device unlock verified on a device; unlock time measured and the 700 ms target reviewed |
-| 3b-2 | People, Personal, Quick Add and detailed profile, trash screens (0.5.0) | Create, edit and trash flows tested |
+| 3b-2 | People, Personal, Quick Add and detailed profile, trash screens (0.5.0) | Create, edit, trash, restore and purge flows tested against the model; screens verified on a device |
 | 4 | Custom fields, multiple values, field customization, advanced profile editing | Field registry overrides and custom types tested |
 | 5 | Password manager, sensitivity enforcement, clipboard and reveal handling | Level 3 handling tests, threat model review complete |
 | 6 | Search, relationships, smart actions | Search normalization tests, reciprocal relationship tests |

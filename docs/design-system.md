@@ -45,6 +45,8 @@ One family, seven roles: display 30/38, title 22/28, subtitle 17/24, body 15/22,
 | `VmButton` | Primary, Secondary, Text. 48 dp minimum height |
 | `VmChip` | Selectable filter or tag chip, exposes selected state |
 | `VmTextField` | Single input. The label is the accessible name and the hint while empty |
+| `VmListItem` | Tappable row with a title, an optional second line and an optional short text at the end |
+| `VmPasswordField` | Masked password input with a show or hide toggle; the keyboard is told not to learn or correct the text |
 | `VmTopBar` | Title with leading slot and trailing actions. Save actions go in the trailing slot |
 | `VmSectionHeader` | Heading semantics |
 | `VmEmptyState` | Title, message, optional action |
