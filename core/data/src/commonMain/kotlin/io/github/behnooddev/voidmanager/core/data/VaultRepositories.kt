@@ -1,10 +1,12 @@
 package io.github.behnooddev.voidmanager.core.data
 
 import io.github.behnooddev.voidmanager.core.data.repository.EntityRepository
+import io.github.behnooddev.voidmanager.core.data.repository.FieldDefinitionRepository
 import io.github.behnooddev.voidmanager.core.data.repository.FieldValueRepository
 import io.github.behnooddev.voidmanager.core.data.repository.RelationshipRepository
 import io.github.behnooddev.voidmanager.core.data.repository.SearchRepository
 import io.github.behnooddev.voidmanager.core.data.repository.SqlEntityRepository
+import io.github.behnooddev.voidmanager.core.data.repository.SqlFieldDefinitionRepository
 import io.github.behnooddev.voidmanager.core.data.repository.SqlFieldValueRepository
 import io.github.behnooddev.voidmanager.core.data.repository.SqlRelationshipRepository
 import io.github.behnooddev.voidmanager.core.data.repository.SqlSearchRepository
@@ -19,6 +21,7 @@ class VaultRepositories(
     clock: () -> Long,
 ) {
     val entities: EntityRepository = SqlEntityRepository(database, ids, clock)
+    val fieldDefinitions: FieldDefinitionRepository = SqlFieldDefinitionRepository(database, ids)
     val fields: FieldValueRepository = SqlFieldValueRepository(database, cipher, ids, clock)
     val relationships: RelationshipRepository = SqlRelationshipRepository(database, ids, clock)
     val search: SearchRepository = SqlSearchRepository(database)

@@ -1,12 +1,17 @@
 package io.github.behnooddev.voidmanager.shared.people
 
 import io.github.behnooddev.voidmanager.core.data.repository.EntityRepository
+import io.github.behnooddev.voidmanager.core.data.repository.FieldDefinitionRepository
 import io.github.behnooddev.voidmanager.core.data.repository.FieldValueRepository
 import io.github.behnooddev.voidmanager.core.data.repository.SearchRepository
 import io.github.behnooddev.voidmanager.core.model.Entity
 import io.github.behnooddev.voidmanager.core.model.EntityKind
 import io.github.behnooddev.voidmanager.core.model.FailureReason
+import io.github.behnooddev.voidmanager.core.model.FieldDataType
+import io.github.behnooddev.voidmanager.core.model.FieldDefinitionInfo
 import io.github.behnooddev.voidmanager.core.model.FieldPart
+import io.github.behnooddev.voidmanager.core.model.FieldRegistry
+import io.github.behnooddev.voidmanager.core.model.FieldSection
 import io.github.behnooddev.voidmanager.core.model.FieldText
 import io.github.behnooddev.voidmanager.core.model.FieldValue
 import io.github.behnooddev.voidmanager.core.model.FieldValueInput
@@ -120,7 +125,7 @@ private class MemoryFields : FieldValueRepository {
         note = null,
         isPrimary = input.isPrimary,
         sortOrder = input.sortOrder,
-        sensitivity = Sensitivity.Personal,
+        sensitivity = input.sensitivity ?: Sensitivity.Personal,
         sharingPolicy = SharingPolicy.Inherit,
         metadata = null,
         parts =
@@ -163,6 +168,76 @@ private class MemoryFields : FieldValueRepository {
     override fun listForEntity(entityId: String) = rows.values.filter { it.entityId == entityId }
 }
 
+private class MemoryDefinitions(
+    private val fieldValues: MemoryFields,
+) : FieldDefinitionRepository {
+    val rows =
+        linkedMapOf<String, FieldDefinitionInfo>().also { map ->
+            FieldRegistry.infos.forEach { map[it.id] = it }
+        }
+    var counter = 0
+
+    override fun list(): List<FieldDefinitionInfo> = rows.values.toList()
+
+    override fun createCustom(
+        label: String,
+        dataType: FieldDataType,
+        sensitivity: Sensitivity,
+        allowsMultiple: Boolean,
+    ): Outcome<FieldDefinitionInfo> {
+        val clean = label.trim()
+        if (clean.isEmpty()) return fail(FailureReason.InvalidInput)
+        if (rows.values.any { it.label.equals(clean, ignoreCase = true) }) return fail(FailureReason.Conflict)
+        val info =
+            FieldDefinitionInfo(
+                "usr.${++counter}",
+                null,
+                FieldSection.Custom,
+                dataType,
+                clean,
+                null,
+                sensitivity,
+                allowsMultiple,
+                emptyList(),
+                true,
+                false,
+                100 + counter,
+            )
+        rows[info.id] = info
+        return Outcome.Success(info)
+    }
+
+    override fun setHidden(
+        id: String,
+        hidden: Boolean,
+    ): Outcome<FieldDefinitionInfo> {
+        val current = rows[id] ?: return fail(FailureReason.NotFound)
+        return Outcome.Success(current.copy(isHidden = hidden).also { rows[id] = it })
+    }
+
+    override fun setLabel(
+        id: String,
+        label: String?,
+    ): Outcome<FieldDefinitionInfo> {
+        val current = rows[id] ?: return fail(FailureReason.NotFound)
+        val clean = label?.trim().orEmpty()
+        if (clean.isNotEmpty() &&
+            rows.values.any { it.id != id && it.label.equals(clean, ignoreCase = true) }
+        ) {
+            return fail(FailureReason.Conflict)
+        }
+        return Outcome.Success(current.copy(labelOverride = clean.ifEmpty { null }).also { rows[id] = it })
+    }
+
+    override fun deleteCustom(id: String): Outcome<Unit> {
+        val current = rows[id] ?: return fail(FailureReason.NotFound)
+        if (!current.isUserDefined) return fail(FailureReason.NotAllowed)
+        if (fieldValues.rows.values.any { it.definitionId == id }) return fail(FailureReason.Conflict)
+        rows.remove(id)
+        return Outcome.Success(Unit)
+    }
+}
+
 private class MemorySearch(
     private val entities: MemoryEntities,
 ) : SearchRepository {
@@ -175,7 +250,8 @@ private class MemorySearch(
 class PeopleModelTest {
     private val entities = MemoryEntities()
     private val fields = MemoryFields()
-    private val model = PeopleModel(entities, fields, MemorySearch(entities), Dispatchers.Unconfined)
+    private val definitions = MemoryDefinitions(fields)
+    private val model = PeopleModel(entities, fields, definitions, MemorySearch(entities), Dispatchers.Unconfined)
 
     private fun add(name: String): String = (assertIs<Outcome.Success<Entity>>(entities.createPerson(name))).value.id
 
@@ -359,5 +435,115 @@ class PeopleModelTest {
             assertEquals(Problem.Storage, model.problem)
             model.clearProblem()
             assertNull(model.problem)
+        }
+
+    @Test
+    fun aCustomFieldCanBeCreatedUsedAndDeletedOnceEmpty() =
+        runBlocking {
+            assertTrue(
+                model.createCustomField("Locker code", FieldDataType.Text, Sensitivity.Secret, allowsMultiple = false),
+            )
+            val field = model.definitions.single { it.isUserDefined }
+            assertEquals("Locker code", field.label)
+
+            val id = add("A")
+            assertTrue(model.saveField(id, null, FieldValueInput(field.id, value = "4821")))
+            assertTrue(
+                model.profile!!
+                    .sections
+                    .single()
+                    .section == FieldSection.Custom,
+            )
+
+            assertFalse(model.deleteCustomField(field.id))
+            assertEquals(Problem.FieldInUse, model.problem)
+
+            val valueId =
+                model.profile!!
+                    .sections
+                    .single()
+                    .rows
+                    .single()
+                    .valueId
+            model.deleteField(id, valueId)
+            assertTrue(model.deleteCustomField(field.id))
+            assertTrue(model.definitions.none { it.isUserDefined })
+        }
+
+    @Test
+    fun aDuplicateLabelIsReportedAsATakenLabel() =
+        runBlocking {
+            assertFalse(
+                model.createCustomField("phone", FieldDataType.Text, Sensitivity.Personal, allowsMultiple = false),
+            )
+            assertEquals(Problem.LabelTaken, model.problem)
+            assertFalse(model.renameField("sys.phone", "Email"))
+            assertEquals(Problem.LabelTaken, model.problem)
+        }
+
+    @Test
+    fun renamingAndHidingAFieldChangeTheProfileAndTheAddList() =
+        runBlocking {
+            val id = add("A")
+            model.saveField(id, null, FieldValueInput("sys.phone", value = "5550100"))
+
+            assertTrue(model.renameField("sys.phone", "Mobile"))
+            model.loadProfile(id)
+            assertEquals(
+                "Mobile",
+                model.profile!!
+                    .sections
+                    .single()
+                    .rows
+                    .single()
+                    .definition
+                    ?.label,
+            )
+
+            model.setFieldHidden("sys.birthday", true)
+            model.loadProfile(id)
+            assertFalse("birthday" in model.profile!!.addable.map { it.systemKey })
+            assertEquals(
+                1,
+                model.profile!!
+                    .sections
+                    .flatMap { it.rows }
+                    .size,
+                "the saved value stays",
+            )
+
+            assertTrue(model.renameField("sys.phone", ""))
+            model.loadProfile(id)
+            assertEquals(
+                "Phone",
+                model.profile!!
+                    .sections
+                    .single()
+                    .rows
+                    .single()
+                    .definition
+                    ?.label,
+            )
+        }
+
+    @Test
+    fun aBuiltInFieldCannotBeDeleted() =
+        runBlocking {
+            assertFalse(model.deleteCustomField("sys.phone"))
+            assertEquals(Problem.NotAllowed, model.problem)
+        }
+
+    @Test
+    fun aValueCanBeRaisedToALevelThatRequiresReauthentication() =
+        runBlocking {
+            val id = add("A")
+            model.saveField(id, null, FieldValueInput("sys.note", value = "private", sensitivity = Sensitivity.Secret))
+            val row =
+                model.profile!!
+                    .sections
+                    .single()
+                    .rows
+                    .single()
+            assertEquals(Sensitivity.Secret, row.sensitivity)
         }
 }

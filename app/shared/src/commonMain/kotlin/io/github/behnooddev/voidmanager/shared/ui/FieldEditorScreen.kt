@@ -18,8 +18,7 @@ import io.github.behnooddev.voidmanager.core.designsystem.components.VmPasswordF
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmTextField
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmTheme
 import io.github.behnooddev.voidmanager.core.model.FieldDataType
-import io.github.behnooddev.voidmanager.core.model.FieldDefinition
-import io.github.behnooddev.voidmanager.core.model.FieldRegistry
+import io.github.behnooddev.voidmanager.core.model.FieldDefinitionInfo
 import io.github.behnooddev.voidmanager.core.model.FieldValueInput
 import io.github.behnooddev.voidmanager.core.model.Sensitivity
 import io.github.behnooddev.voidmanager.core.model.SharingPolicy
@@ -27,6 +26,7 @@ import io.github.behnooddev.voidmanager.shared.people.CompositeInput
 import io.github.behnooddev.voidmanager.shared.people.FieldInput
 import io.github.behnooddev.voidmanager.shared.people.PeopleModel
 import io.github.behnooddev.voidmanager.shared.people.ProfileRow
+import io.github.behnooddev.voidmanager.shared.people.ProtectionLevels
 import io.github.behnooddev.voidmanager.shared.resources.Res
 import io.github.behnooddev.voidmanager.shared.resources.action_save
 import io.github.behnooddev.voidmanager.shared.resources.field_delete
@@ -72,8 +72,8 @@ internal fun FieldEditorScreen(
 
     // The type is chosen first when adding; it is fixed when editing.
     var chosenId by remember { mutableStateOf<String?>(null) }
-    val definition: FieldDefinition? =
-        existing?.definition ?: chosenId?.let { id -> FieldRegistry.definitions.firstOrNull { it.id == id } }
+    val definition: FieldDefinitionInfo? =
+        existing?.definition ?: chosenId?.let { id -> view.addable.firstOrNull { it.id == id } }
 
     if (definition == null) {
         ScreenFrame(model, title = title, onBack = onDone) {
@@ -82,7 +82,7 @@ internal fun FieldEditorScreen(
             } else {
                 BodyText(stringResource(Res.string.field_pick))
                 for (option in view.addable) {
-                    VmListItem(title = option.defaultLabel, onClick = { chosenId = option.id })
+                    VmListItem(title = option.label, onClick = { chosenId = option.id })
                 }
             }
         }
@@ -105,7 +105,7 @@ internal fun FieldEditorScreen(
 private fun FieldForm(
     model: PeopleModel,
     entityId: String,
-    definition: FieldDefinition,
+    definition: FieldDefinitionInfo,
     existing: ProfileRow?,
     becomesPrimary: Boolean,
     title: String,
@@ -135,6 +135,8 @@ private fun FieldForm(
         mutableStateOf(if (secretValue) "" else existing?.note?.reveal().orEmpty())
     }
     val storedParts = existing?.parts?.associate { it.key to it.text.reveal() } ?: emptyMap()
+    var level by remember(existing?.valueId) { mutableStateOf(existing?.sensitivity ?: definition.defaultSensitivity) }
+    val levels = ProtectionLevels.choices(definition.defaultSensitivity, existing?.sensitivity)
     var confirmDelete by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
 
@@ -156,7 +158,7 @@ private fun FieldForm(
                 note = note.trim().ifEmpty { if (secretValue) existing?.note?.reveal() else null },
                 isPrimary = becomesPrimary,
                 sortOrder = existing?.sortOrder ?: 0,
-                sensitivity = existing?.sensitivity,
+                sensitivity = level,
                 sharingPolicy = existing?.sharingPolicy ?: SharingPolicy.Inherit,
                 metadata = existing?.metadata,
                 parts = mergedParts,
@@ -167,7 +169,7 @@ private fun FieldForm(
     }
 
     ScreenFrame(model, title = title, onBack = onDone) {
-        BodyText(definition.defaultLabel, color = VmTheme.colors.textPrimary)
+        BodyText(definition.label, color = VmTheme.colors.textPrimary)
         VmTextField(
             value = label,
             onValueChange = {
@@ -225,6 +227,15 @@ private fun FieldForm(
             )
             val issueText = scalarIssue?.let { fieldIssueText(it) }
             if (issueText != null && scalar.isNotBlank()) StatusText(issueText, VmTheme.colors.warning)
+        }
+        if (levels.size > 1) {
+            LevelPicker(
+                title = defaultLevelTitle(),
+                choices = levels,
+                selected = level,
+                onSelect = { level = it },
+                showRaiseOnlyNote = existing != null,
+            )
         }
         VmTextField(
             value = note,

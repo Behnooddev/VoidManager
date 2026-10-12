@@ -8,10 +8,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class CompositeInputTest {
-    private val card = checkNotNull(FieldRegistry.bySystemKey("card"))
-    private val work = checkNotNull(FieldRegistry.bySystemKey("work"))
-    private val education = checkNotNull(FieldRegistry.bySystemKey("education"))
-    private val account = checkNotNull(FieldRegistry.bySystemKey("account"))
+    private val card = checkNotNull(FieldRegistry.infoBySystemKey("card"))
+    private val work = checkNotNull(FieldRegistry.infoBySystemKey("work"))
+    private val education = checkNotNull(FieldRegistry.infoBySystemKey("education"))
+    private val account = checkNotNull(FieldRegistry.infoBySystemKey("account"))
 
     @Test
     fun aValueNeedsAtLeastOneFilledPart() {

@@ -1,6 +1,6 @@
 package io.github.behnooddev.voidmanager.shared.people
 
-import io.github.behnooddev.voidmanager.core.model.FieldDefinition
+import io.github.behnooddev.voidmanager.core.model.FieldDefinitionInfo
 import io.github.behnooddev.voidmanager.core.model.Sensitivity
 
 /**
@@ -27,7 +27,7 @@ object CompositeInput {
 
     /** One entry per filled part that is not well formed. Blank parts are never reported. */
     fun issues(
-        definition: FieldDefinition,
+        definition: FieldDefinitionInfo,
         parts: Map<String, String>,
     ): Map<String, FieldIssue> =
         buildMap {
@@ -38,13 +38,13 @@ object CompositeInput {
         }
 
     fun canSave(
-        definition: FieldDefinition,
+        definition: FieldDefinitionInfo,
         parts: Map<String, String>,
     ): Boolean = hasContent(parts) && issues(definition, parts).isEmpty()
 
     /** The parts to store: only the keys the definition knows, trimmed, without blanks. */
     fun cleaned(
-        definition: FieldDefinition,
+        definition: FieldDefinitionInfo,
         parts: Map<String, String>,
     ): Map<String, String> =
         buildMap {
@@ -59,7 +59,7 @@ object CompositeInput {
      * editor, so a blank level 3 part keeps the stored text instead of clearing it.
      */
     fun merged(
-        definition: FieldDefinition,
+        definition: FieldDefinitionInfo,
         typed: Map<String, String>,
         existing: Map<String, String>,
     ): Map<String, String> =

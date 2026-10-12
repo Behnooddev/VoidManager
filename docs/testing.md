@@ -31,6 +31,8 @@ Status: Proposed.
 | `core:data` (JVM) | repositories against an encrypted vault | CI: did not compile in 0.3.0 (BUG-004); passes since 0.3.1 |
 | `app:shared` lock flow | state machine, throttle, setup form, controller | Authoring environment (40 tests) and CI (passed) |
 | `app:shared` people | routes, field validation, quick add, profile building, model | Authoring environment (41 tests); CI passed up to 0.5.0, 0.6.0 pending |
+| `core:data` field definitions | custom fields, overrides, deletion rules | CI (10 tests, pending); also on Windows and macOS since 0.8.0 |
+| `app:shared` customization | hidden, renamed and custom fields on the profile, protection level choices | Authoring environment (14 tests); CI pending |
 | `app:shared` secrets and settings | reveal and re-authentication rules, copy, settings, password check | Authoring environment (35 tests); CI pending |
 | SQL schema | constraints, cascades, all queries | Ran against SQLite in the authoring environment, outside Gradle |
 

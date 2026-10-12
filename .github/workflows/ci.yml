@@ -73,6 +73,27 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # Open decision 13: the encrypted database and the key hierarchy must be shown to work on the
+  # systems a desktop release would run on. This runs the same JVM tests on Windows and macOS.
+  desktop-encryption:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Encrypted database, repository and key hierarchy tests
+        run: ./gradlew --continue :core:database:jvmTest :core:data:jvmTest :core:crypto:test
+
   dependency-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

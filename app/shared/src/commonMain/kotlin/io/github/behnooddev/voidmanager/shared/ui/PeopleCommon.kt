@@ -15,7 +15,9 @@ import io.github.behnooddev.voidmanager.core.designsystem.components.VmButtonSty
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmTopBar
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmSpacing
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmTheme
+import io.github.behnooddev.voidmanager.core.model.FieldDataType
 import io.github.behnooddev.voidmanager.core.model.FieldSection
+import io.github.behnooddev.voidmanager.core.model.Sensitivity
 import io.github.behnooddev.voidmanager.shared.people.FieldIssue
 import io.github.behnooddev.voidmanager.shared.people.PeopleModel
 import io.github.behnooddev.voidmanager.shared.people.Problem
@@ -33,6 +35,14 @@ import io.github.behnooddev.voidmanager.shared.resources.field_issue_partial_dat
 import io.github.behnooddev.voidmanager.shared.resources.field_issue_phone
 import io.github.behnooddev.voidmanager.shared.resources.field_issue_pin
 import io.github.behnooddev.voidmanager.shared.resources.field_issue_url
+import io.github.behnooddev.voidmanager.shared.resources.level_help_personal
+import io.github.behnooddev.voidmanager.shared.resources.level_help_public
+import io.github.behnooddev.voidmanager.shared.resources.level_help_secret
+import io.github.behnooddev.voidmanager.shared.resources.level_help_sensitive
+import io.github.behnooddev.voidmanager.shared.resources.level_personal
+import io.github.behnooddev.voidmanager.shared.resources.level_public
+import io.github.behnooddev.voidmanager.shared.resources.level_secret
+import io.github.behnooddev.voidmanager.shared.resources.level_sensitive
 import io.github.behnooddev.voidmanager.shared.resources.part_bank
 import io.github.behnooddev.voidmanager.shared.resources.part_city
 import io.github.behnooddev.voidmanager.shared.resources.part_company
@@ -60,7 +70,9 @@ import io.github.behnooddev.voidmanager.shared.resources.part_street
 import io.github.behnooddev.voidmanager.shared.resources.part_username
 import io.github.behnooddev.voidmanager.shared.resources.part_website
 import io.github.behnooddev.voidmanager.shared.resources.problem_conflict
+import io.github.behnooddev.voidmanager.shared.resources.problem_field_in_use
 import io.github.behnooddev.voidmanager.shared.resources.problem_invalid
+import io.github.behnooddev.voidmanager.shared.resources.problem_label_taken
 import io.github.behnooddev.voidmanager.shared.resources.problem_not_allowed
 import io.github.behnooddev.voidmanager.shared.resources.problem_not_found
 import io.github.behnooddev.voidmanager.shared.resources.problem_partial
@@ -76,6 +88,14 @@ import io.github.behnooddev.voidmanager.shared.resources.section_identity
 import io.github.behnooddev.voidmanager.shared.resources.section_notes
 import io.github.behnooddev.voidmanager.shared.resources.section_social
 import io.github.behnooddev.voidmanager.shared.resources.section_work
+import io.github.behnooddev.voidmanager.shared.resources.type_date
+import io.github.behnooddev.voidmanager.shared.resources.type_email
+import io.github.behnooddev.voidmanager.shared.resources.type_multiline
+import io.github.behnooddev.voidmanager.shared.resources.type_number
+import io.github.behnooddev.voidmanager.shared.resources.type_phone
+import io.github.behnooddev.voidmanager.shared.resources.type_text
+import io.github.behnooddev.voidmanager.shared.resources.type_url
+import io.github.behnooddev.voidmanager.shared.resources.type_username
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -141,6 +161,8 @@ internal fun problemText(problem: Problem): String =
             Problem.NotAllowed -> Res.string.problem_not_allowed
             Problem.Storage -> Res.string.problem_storage
             Problem.PartiallySaved -> Res.string.problem_partial
+            Problem.LabelTaken -> Res.string.problem_label_taken
+            Problem.FieldInUse -> Res.string.problem_field_in_use
         },
     )
 
@@ -214,3 +236,50 @@ internal fun partLabel(key: String): String {
         }
     return if (resource != null) stringResource(resource) else key
 }
+
+/** The message for the last problem, with a Dismiss button. Draws nothing when there is none. */
+@Composable
+internal fun ProblemBanner(model: PeopleModel) {
+    val problem = model.problem ?: return
+    Column(verticalArrangement = Arrangement.spacedBy(VmSpacing.xs)) {
+        StatusText(problemText(problem), VmTheme.colors.danger)
+        VmButton(text = stringResource(Res.string.dismiss), onClick = model::clearProblem, style = VmButtonStyle.Text)
+    }
+}
+
+@Composable
+internal fun levelText(level: Sensitivity): String =
+    stringResource(
+        when (level) {
+            Sensitivity.Public -> Res.string.level_public
+            Sensitivity.Personal -> Res.string.level_personal
+            Sensitivity.Sensitive -> Res.string.level_sensitive
+            Sensitivity.Secret -> Res.string.level_secret
+        },
+    )
+
+@Composable
+internal fun levelHelp(level: Sensitivity): String =
+    stringResource(
+        when (level) {
+            Sensitivity.Public -> Res.string.level_help_public
+            Sensitivity.Personal -> Res.string.level_help_personal
+            Sensitivity.Sensitive -> Res.string.level_help_sensitive
+            Sensitivity.Secret -> Res.string.level_help_secret
+        },
+    )
+
+@Composable
+internal fun typeText(type: FieldDataType): String =
+    stringResource(
+        when (type) {
+            FieldDataType.Multiline -> Res.string.type_multiline
+            FieldDataType.Number -> Res.string.type_number
+            FieldDataType.Date -> Res.string.type_date
+            FieldDataType.Url -> Res.string.type_url
+            FieldDataType.Phone -> Res.string.type_phone
+            FieldDataType.Email -> Res.string.type_email
+            FieldDataType.Username -> Res.string.type_username
+            else -> Res.string.type_text
+        },
+    )

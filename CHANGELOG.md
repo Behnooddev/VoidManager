@@ -4,6 +4,37 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-11
+
+Phase 4b: field customization and per-value protection level.
+
+### Added
+
+- Settings, Manage fields: hide a built-in field, rename a built-in field (and restore its default name), add fields of your own, and delete a custom field once it has no values.
+- Custom fields: a name, a type (text, long text, number, date, web address, phone, email or username), a starting protection level (Personal, Sensitive or Secret), and whether several values are allowed. They appear in the Custom section and in the Add a field list, and a Secret custom field needs re-authentication to show like any other level 3 value.
+- A protection level picker in the value editor. A value can be raised (for example to Secret) but the screens never lower it, and it never goes below the field's default.
+- `FieldDefinitionRepository` (`core:data`) and `FieldDefinitionInfo` (`core:model`): the definitions of one vault with their overrides. Label overrides and the hidden flag survive the seeder running again.
+- CI: the encrypted database, repository and key hierarchy tests also run on Windows and macOS (open decision 13).
+- 10 repository tests (they run in CI) and 14 `app:shared` tests for customization.
+
+### Changed
+
+- A hidden field is left out of the Add a field list only. Values already saved under it stay on the profile.
+- The profile uses the vault's field names, so a renamed field shows its new name everywhere.
+- Two fields cannot share a name, including built-in names, ignoring case; a taken name is reported as such.
+
+### Not included
+
+- Reordering fields, custom fields with several parts, and lowering a value's protection level.
+- A way to move a value from one field to another before deleting a custom field.
+
+### Compatibility
+
+- Database schema: 1. The columns for hiding, renaming and ordering were already in version 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.7.0] - 2026-10-10
 
 Phase 5: reveal rules, re-authentication for level 3 values, clipboard handling and timing settings.

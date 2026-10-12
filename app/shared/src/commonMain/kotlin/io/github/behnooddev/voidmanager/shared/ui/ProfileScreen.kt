@@ -175,7 +175,7 @@ private fun ProfileRowCard(
     onEdit: () -> Unit,
     onMakePrimary: (() -> Unit)?,
 ) {
-    val title = row.label ?: row.definition?.defaultLabel ?: stringResource(Res.string.profile_other_field)
+    val title = row.label ?: row.definition?.label ?: stringResource(Res.string.profile_other_field)
     VmSurface(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(VmSpacing.md),

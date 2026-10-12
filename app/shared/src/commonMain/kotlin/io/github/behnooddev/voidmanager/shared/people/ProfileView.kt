@@ -1,8 +1,7 @@
 package io.github.behnooddev.voidmanager.shared.people
 
 import io.github.behnooddev.voidmanager.core.model.Entity
-import io.github.behnooddev.voidmanager.core.model.FieldDefinition
-import io.github.behnooddev.voidmanager.core.model.FieldRegistry
+import io.github.behnooddev.voidmanager.core.model.FieldDefinitionInfo
 import io.github.behnooddev.voidmanager.core.model.FieldSection
 import io.github.behnooddev.voidmanager.core.model.FieldText
 import io.github.behnooddev.voidmanager.core.model.FieldValue
@@ -25,7 +24,7 @@ data class PartRow(
 data class ProfileRow(
     val valueId: String,
     val definitionId: String,
-    val definition: FieldDefinition?,
+    val definition: FieldDefinitionInfo?,
     val label: String?,
     val text: FieldText?,
     val note: FieldText?,
@@ -53,22 +52,22 @@ data class ProfileView(
     val entity: Entity,
     val sections: List<ProfileSection>,
     /** Fields that can still be added, for the Add button. */
-    val addable: List<FieldDefinition>,
+    val addable: List<FieldDefinitionInfo>,
 ) {
     val isEmpty: Boolean get() = sections.isEmpty()
 }
 
 object ProfileBuilder {
-    private val BY_ID: Map<String, FieldDefinition> = FieldRegistry.definitions.associateBy { it.id }
-
     fun build(
         entity: Entity,
         values: List<FieldValue>,
+        definitions: List<FieldDefinitionInfo>,
     ): ProfileView {
+        val byId = definitions.associateBy { it.id }
         val rows =
             values
                 .sortedWith(compareBy({ it.sortOrder }, { it.createdAt }))
-                .map { toRow(it) }
+                .map { toRow(it, byId[it.definitionId]) }
         val sections =
             rows
                 .groupBy { it.definition?.section ?: FieldSection.Custom }
@@ -77,11 +76,13 @@ object ProfileBuilder {
                 .map { (section, sectionRows) ->
                     ProfileSection(section, sectionRows.sortedByDescending { it.isPrimary })
                 }
-        return ProfileView(entity, sections, FieldInput.addable(values))
+        return ProfileView(entity, sections, FieldInput.addable(definitions, values))
     }
 
-    private fun toRow(value: FieldValue): ProfileRow {
-        val definition = BY_ID[value.definitionId]
+    private fun toRow(
+        value: FieldValue,
+        definition: FieldDefinitionInfo?,
+    ): ProfileRow {
         val order = definition?.parts?.map { it.key }.orEmpty()
         val parts =
             value.parts

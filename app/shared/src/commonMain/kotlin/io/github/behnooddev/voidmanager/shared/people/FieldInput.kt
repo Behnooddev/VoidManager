@@ -1,8 +1,7 @@
 package io.github.behnooddev.voidmanager.shared.people
 
 import io.github.behnooddev.voidmanager.core.model.FieldDataType
-import io.github.behnooddev.voidmanager.core.model.FieldDefinition
-import io.github.behnooddev.voidmanager.core.model.FieldRegistry
+import io.github.behnooddev.voidmanager.core.model.FieldDefinitionInfo
 import io.github.behnooddev.voidmanager.core.model.FieldValue
 
 enum class FieldIssue {
@@ -43,13 +42,19 @@ object FieldInput {
     private val DAYS_IN_MONTH = intArrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
     /** Composite fields (address, card, account, work, education) are edited part by part, see [CompositeInput]. */
-    fun isEditable(definition: FieldDefinition): Boolean =
+    fun isEditable(definition: FieldDefinitionInfo): Boolean =
         definition.isComposite || definition.dataType in EDITABLE_TYPES
 
-    /** Fields that can be added now: editable ones, minus single-value fields that already have a value. */
-    fun addable(existing: List<FieldValue>): List<FieldDefinition> {
+    /**
+     * Fields that can be added now: visible, editable ones, minus single-value fields that already
+     * have a value. A hidden field is only left out of this list; values already saved stay visible.
+     */
+    fun addable(
+        definitions: List<FieldDefinitionInfo>,
+        existing: List<FieldValue>,
+    ): List<FieldDefinitionInfo> {
         val used = existing.mapTo(HashSet()) { it.definitionId }
-        return FieldRegistry.definitions.filter { isEditable(it) && (it.allowsMultiple || it.id !in used) }
+        return definitions.filter { !it.isHidden && isEditable(it) && (it.allowsMultiple || it.id !in used) }
     }
 
     fun validate(

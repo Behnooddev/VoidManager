@@ -4,6 +4,7 @@ import io.github.behnooddev.voidmanager.core.model.Entity
 import io.github.behnooddev.voidmanager.core.model.EntityKind
 import io.github.behnooddev.voidmanager.core.model.FieldDataType
 import io.github.behnooddev.voidmanager.core.model.FieldDefinition
+import io.github.behnooddev.voidmanager.core.model.FieldDefinitionInfo
 import io.github.behnooddev.voidmanager.core.model.FieldPart
 import io.github.behnooddev.voidmanager.core.model.FieldRegistry
 import io.github.behnooddev.voidmanager.core.model.FieldSection
@@ -92,21 +93,105 @@ class FieldInputTest {
     @Test
     fun compositeFieldsAreEditablePartByPart() {
         for (key in listOf("card", "account", "address", "work", "education", "phone")) {
-            val definition = FieldRegistry.bySystemKey(key)
+            val definition = FieldRegistry.infoBySystemKey(key)
             assertTrue(definition != null && FieldInput.isEditable(definition), key)
         }
     }
 
     @Test
     fun aSingleValueFieldDisappearsFromTheAddListOnceItHasAValue() {
-        val before = FieldInput.addable(emptyList()).map { it.systemKey }
+        val before = FieldInput.addable(FieldRegistry.infos, emptyList()).map { it.systemKey }
         assertTrue("birthday" in before && "phone" in before)
 
         val birthday = value("v1", FieldDefinition.idForSystemKey("birthday"), "2000-01-01")
         val phone = value("v2", FieldDefinition.idForSystemKey("phone"), "5550100")
-        val after = FieldInput.addable(listOf(birthday, phone)).map { it.systemKey }
+        val after = FieldInput.addable(FieldRegistry.infos, listOf(birthday, phone)).map { it.systemKey }
         assertFalse("birthday" in after)
         assertTrue("phone" in after)
+    }
+}
+
+class FieldCustomizationTest {
+    private fun definitions(vararg changes: (FieldDefinitionInfo) -> FieldDefinitionInfo): List<FieldDefinitionInfo> =
+        FieldRegistry.infos.map { info -> changes.fold(info) { acc, change -> change(acc) } }
+
+    @Test
+    fun aHiddenFieldIsLeftOutOfTheAddListButItsValuesStayOnTheProfile() {
+        val hidden = definitions({ if (it.systemKey == "birthday") it.copy(isHidden = true) else it })
+        assertFalse("birthday" in FieldInput.addable(hidden, emptyList()).map { it.systemKey })
+
+        val saved = value("v1", FieldDefinition.idForSystemKey("birthday"), "2000-01-01")
+        val entity = Entity("e1", EntityKind.Person, "Synthetic Person", false, null, 1L, 1L, null)
+        val view = ProfileBuilder.build(entity, listOf(saved), hidden)
+        assertEquals(listOf("v1"), view.sections.flatMap { it.rows }.map { it.valueId })
+    }
+
+    @Test
+    fun aCustomFieldIsOfferedAndShownUnderItsOwnLabelInTheCustomSection() {
+        val custom =
+            FieldDefinitionInfo(
+                id = "usr.1",
+                systemKey = null,
+                section = FieldSection.Custom,
+                dataType = FieldDataType.Text,
+                defaultLabel = "Locker code",
+                labelOverride = null,
+                defaultSensitivity = Sensitivity.Secret,
+                allowsMultiple = false,
+                parts = emptyList(),
+                isUserDefined = true,
+                isHidden = false,
+                sortOrder = 99,
+            )
+        val all = FieldRegistry.infos + custom
+        assertTrue("usr.1" in FieldInput.addable(all, emptyList()).map { it.id })
+
+        val entity = Entity("e1", EntityKind.Person, "Synthetic Person", false, null, 1L, 1L, null)
+        val view = ProfileBuilder.build(entity, listOf(value("v1", "usr.1", "4821", protected = true)), all)
+        val section = view.sections.single()
+        assertEquals(FieldSection.Custom, section.section)
+        assertEquals(
+            "Locker code",
+            section.rows
+                .single()
+                .definition
+                ?.label,
+        )
+        assertFalse(
+            "usr.1" in FieldInput.addable(all, listOf(value("v1", "usr.1", "4821"))).map { it.id },
+            "single value",
+        )
+    }
+
+    @Test
+    fun aRenamedFieldShowsItsOverrideAndABlankOverrideFallsBack() {
+        val phone = FieldRegistry.infoBySystemKey("phone")!!
+        assertEquals("Mobile", phone.copy(labelOverride = "Mobile").label)
+        assertEquals("Phone", phone.copy(labelOverride = "  ").label)
+        assertEquals("Phone", phone.label)
+    }
+
+    @Test
+    fun aValueCanBeRaisedButNeverLoweredByTheScreens() {
+        assertEquals(
+            listOf(Sensitivity.Personal, Sensitivity.Sensitive, Sensitivity.Secret),
+            ProtectionLevels.choices(Sensitivity.Personal, null),
+        )
+        assertEquals(
+            listOf(Sensitivity.Sensitive, Sensitivity.Secret),
+            ProtectionLevels.choices(Sensitivity.Sensitive, Sensitivity.Sensitive),
+        )
+        assertEquals(listOf(Sensitivity.Secret), ProtectionLevels.choices(Sensitivity.Personal, Sensitivity.Secret))
+        assertEquals(Sensitivity.entries, ProtectionLevels.choices(Sensitivity.Public, null))
+    }
+
+    @Test
+    fun aCustomFieldNeedsALabelOfReasonableLength() {
+        assertFalse(CustomFieldForm.canSave("   "))
+        assertTrue(CustomFieldForm.canSave(" Locker "))
+        assertTrue(CustomFieldForm.canSave("x".repeat(60)))
+        assertFalse(CustomFieldForm.canSave("x".repeat(61)))
+        assertTrue(CustomFieldForm.TYPES.none { it.name in setOf("Card", "Account", "Address", "Work", "Education") })
     }
 }
 
@@ -149,7 +234,7 @@ class ProfileBuilderTest {
                 value("v3", "sys.phone", "5550100", sort = 2, primary = true),
                 value("v4", "sys.birthday", "2000-01-01", sort = 0),
             )
-        val view = ProfileBuilder.build(entity, values)
+        val view = ProfileBuilder.build(entity, values, FieldRegistry.infos)
         assertEquals(
             listOf(FieldSection.Contact, FieldSection.Dates, FieldSection.Notes),
             view.sections.map { it.section },
@@ -168,7 +253,7 @@ class ProfileBuilderTest {
         val secret = value("v1", "sys.national_id", "0123456789", protected = true)
         val row =
             ProfileBuilder
-                .build(entity, listOf(secret))
+                .build(entity, listOf(secret), FieldRegistry.infos)
                 .sections
                 .single()
                 .rows
@@ -192,7 +277,7 @@ class ProfileBuilderTest {
     fun aCompositeValueListsItsPartsInDefinitionOrderAndKeepsProtectedPartsMasked() {
         val row =
             ProfileBuilder
-                .build(entity, listOf(account()))
+                .build(entity, listOf(account()), FieldRegistry.infos)
                 .sections
                 .single()
                 .rows
@@ -221,7 +306,7 @@ class ProfileBuilderTest {
     fun aRowCanBeStoredAgainWithOnlyThePrimaryMarkChanged() {
         val row =
             ProfileBuilder
-                .build(entity, listOf(account()))
+                .build(entity, listOf(account()), FieldRegistry.infos)
                 .sections
                 .single()
                 .rows
@@ -237,6 +322,7 @@ class ProfileBuilderTest {
                 .build(
                     entity,
                     listOf(value("v2", "sys.phone", "5550100")),
+                    FieldRegistry.infos,
                 ).sections
                 .single()
                 .rows
@@ -248,7 +334,7 @@ class ProfileBuilderTest {
 
     @Test
     fun anEmptyProfileHasNoSectionsButOffersFieldsToAdd() {
-        val view = ProfileBuilder.build(entity, emptyList())
+        val view = ProfileBuilder.build(entity, emptyList(), FieldRegistry.infos)
         assertTrue(view.isEmpty)
         assertTrue(view.addable.isNotEmpty())
     }

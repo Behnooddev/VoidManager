@@ -191,9 +191,11 @@ Deleting sets `deleted_at` on the entity. Field values, media and relationships 
 
 ## Field registry and customization
 
-- Built-in definitions can be hidden, reordered and relabeled per vault. These are stored as per-vault overrides keyed by `system_key`, not by editing the definition.
-- User-defined definitions have `system_key` null and a generated id.
-- Deleting a user-defined definition that has values is blocked until the values are moved or removed.
+- Built-in definitions can be hidden, relabeled and (in the schema) reordered per vault. The overrides are the `is_hidden`, `label_override` and `sort_order` columns of the definition row; the seeder updates the shipped columns and leaves these three alone, so overrides survive an app update. Hiding and relabeling are implemented (0.8.0); reordering is not.
+- User-defined definitions have `system_key` null and a generated id that starts with `usr.`. They are scalar (one value per entry); composite custom fields are not offered. A new custom field cannot reuse another field's name, ignoring case.
+- A hidden field is left out of the add list; values saved under it stay visible.
+- Deleting a user-defined definition that has values is blocked until the values are removed. A built-in definition cannot be deleted.
+- A value's protection level can be raised on save, up to Secret. The repository refuses a level below the field's default; the screens also never lower a level the value already has.
 
 ## Consistency rules
 

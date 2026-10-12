@@ -9,16 +9,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmButton
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmChip
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmSpacing
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmTheme
+import io.github.behnooddev.voidmanager.shared.BackDispatcher
+import io.github.behnooddev.voidmanager.shared.people.PeopleModel
 import io.github.behnooddev.voidmanager.shared.resources.Res
 import io.github.behnooddev.voidmanager.shared.resources.settings_biometric_disable
 import io.github.behnooddev.voidmanager.shared.resources.settings_biometric_enable
@@ -30,6 +34,9 @@ import io.github.behnooddev.voidmanager.shared.resources.settings_biometric_titl
 import io.github.behnooddev.voidmanager.shared.resources.settings_biometric_unavailable
 import io.github.behnooddev.voidmanager.shared.resources.settings_clipboard_note
 import io.github.behnooddev.voidmanager.shared.resources.settings_clipboard_title
+import io.github.behnooddev.voidmanager.shared.resources.settings_fields_message
+import io.github.behnooddev.voidmanager.shared.resources.settings_fields_open
+import io.github.behnooddev.voidmanager.shared.resources.settings_fields_title
 import io.github.behnooddev.voidmanager.shared.resources.settings_idle_title
 import io.github.behnooddev.voidmanager.shared.resources.settings_minutes
 import io.github.behnooddev.voidmanager.shared.resources.settings_reauth_title
@@ -48,12 +55,30 @@ internal fun SettingsScreen(
     controller: VaultController,
     deviceKeys: DeviceKeyProvider?,
     settings: AppSettingsHolder,
+    model: PeopleModel,
+    back: BackDispatcher,
+    onActivity: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     val available = remember { deviceKeys != null && deviceKeys.isAvailable() }
     var enabled by remember { mutableStateOf(deviceKeys != null && controller.deviceUnlockReady(deviceKeys)) }
     var enableFailed by remember { mutableStateOf(false) }
+    var showFields by rememberSaveable { mutableStateOf(false) }
+
+    // While the fields screen is open, the system back action closes it instead of leaving the app.
+    DisposableEffect(showFields) {
+        val handler: () -> Boolean = {
+            showFields = false
+            true
+        }
+        if (showFields) back.handler = handler
+        onDispose { if (back.handler === handler) back.handler = null }
+    }
+    if (showFields) {
+        FieldsScreen(model, onBack = { showFields = false }, onActivity = onActivity)
+        return
+    }
 
     Column(
         modifier =
@@ -106,6 +131,13 @@ internal fun SettingsScreen(
         if (enableFailed) {
             StatusText(stringResource(Res.string.settings_biometric_failed), VmTheme.colors.danger)
         }
+
+        BasicText(
+            text = stringResource(Res.string.settings_fields_title),
+            style = VmTheme.typography.subtitle.copy(color = VmTheme.colors.textPrimary),
+        )
+        BodyText(stringResource(Res.string.settings_fields_message))
+        VmButton(text = stringResource(Res.string.settings_fields_open), onClick = { showFields = true })
 
         ChoiceSetting(
             title = stringResource(Res.string.settings_idle_title),

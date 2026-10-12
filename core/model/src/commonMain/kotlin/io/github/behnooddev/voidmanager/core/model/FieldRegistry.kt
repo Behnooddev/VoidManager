@@ -116,4 +116,9 @@ object FieldRegistry {
     private val byKey: Map<String, FieldDefinition> = definitions.associateBy { it.systemKey }
 
     fun bySystemKey(systemKey: String): FieldDefinition? = byKey[systemKey]
+
+    /** The built-in definitions as [FieldDefinitionInfo], without any per-vault override. */
+    val infos: List<FieldDefinitionInfo> = definitions.mapIndexed { index, definition -> definition.toInfo(index) }
+
+    fun infoBySystemKey(systemKey: String): FieldDefinitionInfo? = bySystemKey(systemKey)?.toInfo()
 }

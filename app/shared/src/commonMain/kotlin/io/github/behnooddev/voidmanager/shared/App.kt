@@ -124,7 +124,10 @@ private fun AppShell(
     settings: AppSettingsHolder,
 ) {
     // One model per unlocked vault. It is dropped with the vault when the app locks.
-    val model = remember(repositories) { PeopleModel(repositories.entities, repositories.fields, repositories.search) }
+    val model =
+        remember(repositories) {
+            PeopleModel(repositories.entities, repositories.fields, repositories.fieldDefinitions, repositories.search)
+        }
     // What is shown and the re-authentication window belong to this unlocked session only.
     val secrets =
         remember(repositories) {
@@ -213,7 +216,7 @@ private fun DestinationContent(
             },
         )
         if (destination == Destination.Settings) {
-            SettingsScreen(controller, deviceKeys, settings)
+            SettingsScreen(controller, deviceKeys, settings, model, back, onActivity = controller::onInteraction)
         } else {
             VmEmptyState(
                 title = stringResource(Res.string.placeholder_title),

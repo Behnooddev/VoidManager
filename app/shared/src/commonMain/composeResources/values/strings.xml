@@ -187,4 +187,47 @@
   <string name="settings_seconds">%1$d s</string>
   <string name="settings_minutes">%1$d min</string>
   <string name="settings_clipboard_note">The clipboard is cleared while the app is running. If the app is closed before the time is up, the copied text stays on the clipboard.</string>
+
+  <string name="level_title">Protection level</string>
+  <string name="level_public">Public</string>
+  <string name="level_personal">Personal</string>
+  <string name="level_sensitive">Sensitive</string>
+  <string name="level_secret">Secret</string>
+  <string name="level_help_public">Searchable. No extra protection.</string>
+  <string name="level_help_personal">Searchable. Stored in the encrypted database.</string>
+  <string name="level_help_sensitive">Not searchable. Encrypted separately and masked until you show it.</string>
+  <string name="level_help_secret">Like Sensitive, and showing or copying it asks for your password or biometrics again.</string>
+  <string name="level_raise_only">A value can be raised to a higher level but not lowered.</string>
+
+  <string name="settings_fields_title">Fields</string>
+  <string name="settings_fields_message">Hide fields you do not use, rename them, or add your own.</string>
+  <string name="settings_fields_open">Manage fields</string>
+
+  <string name="fields_intro">A hidden field is left out of the Add a field list. Values you already saved stay on the profile.</string>
+  <string name="fields_add_custom">Add a custom field</string>
+  <string name="fields_new_label">Name of the field</string>
+  <string name="fields_new_type">What it holds</string>
+  <string name="fields_new_level">Protection level</string>
+  <string name="fields_new_multiple">Allow several values</string>
+  <string name="fields_hide">Hide</string>
+  <string name="fields_show">Show</string>
+  <string name="fields_rename">Rename</string>
+  <string name="fields_rename_hint">New name</string>
+  <string name="fields_reset_name">Use the default name</string>
+  <string name="fields_delete">Delete</string>
+  <string name="fields_delete_confirm">Delete this field</string>
+  <string name="fields_badge_hidden">Hidden</string>
+  <string name="fields_badge_custom">Custom</string>
+
+  <string name="type_text">Text</string>
+  <string name="type_multiline">Long text</string>
+  <string name="type_number">Number</string>
+  <string name="type_date">Date</string>
+  <string name="type_url">Web address</string>
+  <string name="type_phone">Phone number</string>
+  <string name="type_email">Email address</string>
+  <string name="type_username">Username</string>
+
+  <string name="problem_label_taken">Another field already has this name.</string>
+  <string name="problem_field_in_use">This field still has values. Delete or move them first.</string>
 </resources>

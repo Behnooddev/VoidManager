@@ -56,3 +56,25 @@ SELECT * FROM field_definition WHERE id = :id;
 
 selectPartsFor:
 SELECT * FROM field_definition_part WHERE definition_id = :definitionId ORDER BY sort_order, part_key;
+
+insertCustom:
+INSERT INTO field_definition (
+  id, system_key, section, data_type, default_label, default_sensitivity,
+  allows_multiple, is_composite, is_user_defined, schema_version, sort_order
+) VALUES (:id, NULL, :section, :dataType, :defaultLabel, :defaultSensitivity,
+  :allowsMultiple, 0, 1, 1, :sortOrder);
+
+setHidden:
+UPDATE field_definition SET is_hidden = :isHidden WHERE id = :id;
+
+setLabelOverride:
+UPDATE field_definition SET label_override = :labelOverride WHERE id = :id;
+
+setCustomLabel:
+UPDATE field_definition SET default_label = :defaultLabel WHERE id = :id AND is_user_defined = 1;
+
+countValuesForDefinition:
+SELECT COUNT(*) FROM field_value WHERE definition_id = :id;
+
+deleteCustom:
+DELETE FROM field_definition WHERE id = :id AND is_user_defined = 1;

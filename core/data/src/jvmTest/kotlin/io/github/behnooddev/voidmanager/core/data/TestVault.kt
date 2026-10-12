@@ -83,6 +83,7 @@ class TestVault {
 
     val entities get() = repositories.entities
     val fields get() = repositories.fields
+    val definitions get() = repositories.fieldDefinitions
     val relationships get() = repositories.relationships
     val search get() = repositories.search
 }

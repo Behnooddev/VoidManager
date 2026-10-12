@@ -1,10 +1,13 @@
 package io.github.behnooddev.voidmanager.core.data.repository
 
 import io.github.behnooddev.voidmanager.core.model.Entity
+import io.github.behnooddev.voidmanager.core.model.FieldDataType
+import io.github.behnooddev.voidmanager.core.model.FieldDefinitionInfo
 import io.github.behnooddev.voidmanager.core.model.FieldValue
 import io.github.behnooddev.voidmanager.core.model.FieldValueInput
 import io.github.behnooddev.voidmanager.core.model.Outcome
 import io.github.behnooddev.voidmanager.core.model.Relationship
+import io.github.behnooddev.voidmanager.core.model.Sensitivity
 
 /**
  * Repository calls are blocking. Callers run them off the main thread; suspend wrappers are added
@@ -59,6 +62,34 @@ interface FieldValueRepository {
     fun get(id: String): FieldValue?
 
     fun listForEntity(entityId: String): List<FieldValue>
+}
+
+interface FieldDefinitionRepository {
+    /** Every definition, built-in and user-defined, hidden ones included, in display order. */
+    fun list(): List<FieldDefinitionInfo>
+
+    /** Adds a single-value-type field of the user's own, in the Custom section. */
+    fun createCustom(
+        label: String,
+        dataType: FieldDataType,
+        sensitivity: Sensitivity,
+        allowsMultiple: Boolean,
+    ): Outcome<FieldDefinitionInfo>
+
+    /** Hides or shows a field in the add list. Saved values are not affected. */
+    fun setHidden(
+        id: String,
+        hidden: Boolean,
+    ): Outcome<FieldDefinitionInfo>
+
+    /** Renames a field for this vault. A null or blank label restores the default label of a built-in field. */
+    fun setLabel(
+        id: String,
+        label: String?,
+    ): Outcome<FieldDefinitionInfo>
+
+    /** Deletes a user-defined field that has no values. Built-in fields cannot be deleted. */
+    fun deleteCustom(id: String): Outcome<Unit>
 }
 
 interface RelationshipRepository {
