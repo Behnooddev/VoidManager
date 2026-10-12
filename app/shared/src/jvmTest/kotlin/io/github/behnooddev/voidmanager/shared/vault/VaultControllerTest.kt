@@ -45,6 +45,14 @@ private class ControllerFakeGateway(
 
     override fun unlock(password: CharArray): OpenOutcome = unlockResult
 
+    var passwordOk = true
+    var verifyCalls = 0
+
+    override fun verifyPassword(password: CharArray): Boolean {
+        verifyCalls++
+        return passwordOk
+    }
+
     override fun deviceUnlockEnabled() = deviceEnabled
 
     override fun unlockWithDeviceKey(deviceKey: ByteArray): OpenOutcome {
@@ -203,5 +211,36 @@ class VaultControllerTest {
             controller.lock()
             assertEquals(Stage.Locked, controller.stage)
             assertEquals(1, gateway.vault.lockCalls)
+        }
+
+    @Test
+    fun verifyPasswordReportsTheResultAndWipesThePassword() =
+        runBlocking {
+            controller.unlock("synthetic".toCharArray())
+            val password = "synthetic".toCharArray()
+            assertTrue(controller.verifyPassword(password))
+            assertTrue(password.all { it == '\u0000' })
+
+            gateway.passwordOk = false
+            assertFalse(controller.verifyPassword("wrong".toCharArray()))
+            assertFalse(controller.busy)
+        }
+
+    @Test
+    fun aBiometricProofSucceedsOnlyWithAKeyAndWipesIt() =
+        runBlocking {
+            controller.unlock("synthetic".toCharArray())
+            val key = newKey()
+            assertTrue(controller.reauthWithDevice(FakeKeys(result = DeviceKeyResult.Key(key))))
+            assertTrue(key.all { it == 0.toByte() })
+            assertFalse(controller.reauthWithDevice(FakeKeys(result = DeviceKeyResult.Cancelled)))
+            assertFalse(controller.reauthWithDevice(FakeKeys(result = DeviceKeyResult.Failed)))
+        }
+
+    @Test
+    fun reauthenticationIsRefusedWhileLocked() =
+        runBlocking {
+            assertFalse(controller.reauthWithDevice(FakeKeys(result = DeviceKeyResult.Key(newKey()))))
+            assertFalse(controller.verifyPassword("synthetic".toCharArray()))
         }
 }

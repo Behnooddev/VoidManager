@@ -66,6 +66,35 @@ class VaultController(
         }
     }
 
+    /** Checks the master password while unlocked. [password] is overwritten before this returns. */
+    suspend fun verifyPassword(password: CharArray): Boolean {
+        if (busy) {
+            password.fill(NUL)
+            return false
+        }
+        busy = true
+        try {
+            return withContext(worker + NonCancellable) { flow.verifyPassword(password) }
+        } finally {
+            password.fill(NUL)
+            busy = false
+            publish()
+        }
+    }
+
+    /** Proves the user is present with the biometric prompt, without opening anything. */
+    suspend fun reauthWithDevice(keys: DeviceKeyProvider): Boolean {
+        if (busy || stage !is Stage.Unlocked) return false
+        busy = true
+        try {
+            val result = keys.releaseKey()
+            if (result is DeviceKeyResult.Key) result.bytes.fill(0)
+            return result is DeviceKeyResult.Key
+        } finally {
+            busy = false
+        }
+    }
+
     /** Turns biometric unlock on. The vault must be unlocked. */
     suspend fun enableDeviceUnlock(keys: DeviceKeyProvider): DeviceUnlockChange {
         if (busy || stage !is Stage.Unlocked) return DeviceUnlockChange.Failed

@@ -148,4 +148,20 @@ class VaultServiceTest {
         assertEquals(calibrated, envelope.kdf)
         assertIs<OpenOutcome.Opened>(service.unlock(password.toCharArray())).vault.lock()
     }
+
+    @Test
+    fun verifyPasswordAcceptsOnlyTheRightPasswordAndOpensNothing() {
+        val service = service()
+        opened(service.create(password.toCharArray())).lock()
+
+        assertTrue(service.verifyPassword(password.toCharArray()))
+        assertFalse(service.verifyPassword("another password".toCharArray()))
+        // The database stays closed: a normal unlock still works and no session was left open.
+        assertIs<OpenOutcome.Opened>(service.unlock(password.toCharArray())).vault.lock()
+    }
+
+    @Test
+    fun verifyPasswordWithoutAVaultIsFalse() {
+        assertFalse(service().verifyPassword(password.toCharArray()))
+    }
 }

@@ -118,4 +118,38 @@ class CompositeInputTest {
             )
         assertEquals(mapOf("service" to "Mail", "password" to "pw"), cleaned)
     }
+
+    @Test
+    fun aBlankLevelThreePartKeepsTheStoredTextWhileOtherPartsFollowTheForm() {
+        val existing =
+            mapOf(
+                "service" to "Mail",
+                "username" to "old",
+                "password" to "hunter2",
+                "recovery" to "backup words",
+            )
+        val typed = mapOf("service" to " Mail ", "username" to "", "password" to "", "recovery" to "new words")
+        val merged = CompositeInput.merged(account, typed, existing)
+        assertEquals(mapOf("service" to "Mail", "password" to "hunter2", "recovery" to "new words"), merged)
+    }
+
+    @Test
+    fun aTypedLevelThreePartReplacesTheStoredText() {
+        val merged = CompositeInput.merged(account, mapOf("password" to "fresh"), mapOf("password" to "hunter2"))
+        assertEquals(mapOf("password" to "fresh"), merged)
+    }
+
+    @Test
+    fun levelTwoPartsAreNotKeptWhenCleared() {
+        val merged =
+            CompositeInput.merged(
+                card,
+                mapOf("number" to ""),
+                mapOf(
+                    "number" to "6037991234567890",
+                    "cvv2" to "123",
+                ),
+            )
+        assertEquals(mapOf("cvv2" to "123"), merged)
+    }
 }

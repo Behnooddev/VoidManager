@@ -38,6 +38,7 @@ import io.github.behnooddev.voidmanager.shared.resources.field_none_left
 import io.github.behnooddev.voidmanager.shared.resources.field_note
 import io.github.behnooddev.voidmanager.shared.resources.field_pick
 import io.github.behnooddev.voidmanager.shared.resources.field_value
+import io.github.behnooddev.voidmanager.shared.resources.keep_current
 import io.github.behnooddev.voidmanager.shared.resources.loading
 import io.github.behnooddev.voidmanager.shared.resources.password_hide
 import io.github.behnooddev.voidmanager.shared.resources.password_show
@@ -115,18 +116,34 @@ private fun FieldForm(
 
     // Plain remember: the text of a protected value must not be written to saved state.
     var label by remember(existing?.valueId) { mutableStateOf(existing?.label.orEmpty()) }
-    var scalar by remember(existing?.valueId) { mutableStateOf(existing?.text?.reveal().orEmpty()) }
-    var parts by remember(existing?.valueId) {
-        mutableStateOf(existing?.parts?.associate { it.key to it.text.reveal() } ?: emptyMap())
+    // Level 3 text is never put on screen here, since showing it needs re-authentication. Such a field
+    // starts empty and an empty field keeps the stored text.
+    val secretValue = existing?.sensitivity == Sensitivity.Secret
+    var scalar by remember(existing?.valueId) {
+        mutableStateOf(if (secretValue) "" else existing?.text?.reveal().orEmpty())
     }
-    var note by remember(existing?.valueId) { mutableStateOf(existing?.note?.reveal().orEmpty()) }
+    var parts by remember(existing?.valueId) {
+        mutableStateOf(
+            existing
+                ?.parts
+                ?.filter { it.sensitivity != Sensitivity.Secret }
+                ?.associate { it.key to it.text.reveal() }
+                ?: emptyMap(),
+        )
+    }
+    var note by remember(existing?.valueId) {
+        mutableStateOf(if (secretValue) "" else existing?.note?.reveal().orEmpty())
+    }
+    val storedParts = existing?.parts?.associate { it.key to it.text.reveal() } ?: emptyMap()
     var confirmDelete by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
 
     val composite = definition.isComposite
-    val scalarIssue = if (composite) null else FieldInput.validate(definition.dataType, scalar)
+    val keepsScalar = secretValue && scalar.isBlank() && existing?.text != null
+    val scalarIssue = if (composite || keepsScalar) null else FieldInput.validate(definition.dataType, scalar)
     val partIssues = if (composite) CompositeInput.issues(definition, parts) else emptyMap()
-    val canSave = if (composite) CompositeInput.canSave(definition, parts) else scalarIssue == null
+    val mergedParts = if (composite) CompositeInput.merged(definition, parts, storedParts) else emptyMap()
+    val canSave = if (composite) mergedParts.isNotEmpty() && partIssues.isEmpty() else scalarIssue == null
 
     fun save() {
         if (saving || !canSave) return
@@ -135,14 +152,14 @@ private fun FieldForm(
             FieldValueInput(
                 definitionId = definition.id,
                 label = label.trim().ifEmpty { null },
-                value = if (composite) null else scalar.trim(),
-                note = note.trim().ifEmpty { null },
+                value = if (composite) null else scalar.trim().ifEmpty { existing?.text?.reveal().orEmpty() },
+                note = note.trim().ifEmpty { if (secretValue) existing?.note?.reveal() else null },
                 isPrimary = becomesPrimary,
                 sortOrder = existing?.sortOrder ?: 0,
                 sensitivity = existing?.sensitivity,
                 sharingPolicy = existing?.sharingPolicy ?: SharingPolicy.Inherit,
                 metadata = existing?.metadata,
-                parts = if (composite) CompositeInput.cleaned(definition, parts) else emptyMap(),
+                parts = mergedParts,
             )
         scope.launch {
             if (model.saveField(entityId, existing?.valueId, input)) onDone() else saving = false
@@ -167,10 +184,19 @@ private fun FieldForm(
                     onActivity()
                 }
                 if (part.sensitivity == Sensitivity.Secret) {
+                    val keeps = existing != null && storedParts.containsKey(part.key)
                     VmPasswordField(
                         value = text,
                         onValueChange = onChange,
-                        label = partLabel(part.key),
+                        label =
+                            if (keeps) {
+                                stringResource(
+                                    Res.string.keep_current,
+                                    partLabel(part.key),
+                                )
+                            } else {
+                                partLabel(part.key)
+                            },
                         showLabel = stringResource(Res.string.password_show),
                         hideLabel = stringResource(Res.string.password_hide),
                     )

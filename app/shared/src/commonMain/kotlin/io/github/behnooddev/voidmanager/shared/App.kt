@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,6 +41,11 @@ import io.github.behnooddev.voidmanager.shared.resources.nav_personal
 import io.github.behnooddev.voidmanager.shared.resources.nav_settings
 import io.github.behnooddev.voidmanager.shared.resources.placeholder_message
 import io.github.behnooddev.voidmanager.shared.resources.placeholder_title
+import io.github.behnooddev.voidmanager.shared.secrets.SecretAccess
+import io.github.behnooddev.voidmanager.shared.secrets.SecretClipboard
+import io.github.behnooddev.voidmanager.shared.secrets.SecretsModel
+import io.github.behnooddev.voidmanager.shared.settings.AppSettingsHolder
+import io.github.behnooddev.voidmanager.shared.settings.MemorySettingsStore
 import io.github.behnooddev.voidmanager.shared.ui.PeopleHost
 import io.github.behnooddev.voidmanager.shared.ui.SettingsScreen
 import io.github.behnooddev.voidmanager.shared.ui.SetupScreen
@@ -49,6 +55,7 @@ import io.github.behnooddev.voidmanager.shared.vault.Stage
 import io.github.behnooddev.voidmanager.shared.vault.VaultController
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.TimeSource
 
 /** Width from which the navigation rail replaces the bottom bar. */
 private const val EXPANDED_WIDTH_DP = 840
@@ -61,8 +68,11 @@ fun App(
     controller: VaultController,
     deviceKeys: DeviceKeyProvider? = null,
     backDispatcher: BackDispatcher? = null,
+    clipboard: SecretClipboard? = null,
+    settings: AppSettingsHolder? = null,
 ) {
     val back = backDispatcher ?: remember { BackDispatcher() }
+    val appSettings = settings ?: remember { AppSettingsHolder(MemorySettingsStore()) }
     VoidManagerTheme {
         LaunchedEffect(controller) {
             while (true) {
@@ -90,7 +100,15 @@ fun App(
             when (val stage = controller.stage) {
                 Stage.NeedsSetup -> SetupScreen(controller)
                 Stage.Locked -> UnlockScreen(controller, deviceKeys)
-                is Stage.Unlocked -> AppShell(controller, deviceKeys, back, stage.vault.repositories)
+                is Stage.Unlocked ->
+                    AppShell(
+                        controller,
+                        deviceKeys,
+                        back,
+                        stage.vault.repositories,
+                        clipboard,
+                        appSettings,
+                    )
             }
         }
     }
@@ -102,9 +120,18 @@ private fun AppShell(
     deviceKeys: DeviceKeyProvider?,
     back: BackDispatcher,
     repositories: VaultRepositories,
+    clipboard: SecretClipboard?,
+    settings: AppSettingsHolder,
 ) {
     // One model per unlocked vault. It is dropped with the vault when the app locks.
     val model = remember(repositories) { PeopleModel(repositories.entities, repositories.fields, repositories.search) }
+    // What is shown and the re-authentication window belong to this unlocked session only.
+    val secrets =
+        remember(repositories) {
+            val origin = TimeSource.Monotonic.markNow()
+            SecretsModel(SecretAccess({ settings.current }, { origin.elapsedNow().inWholeMilliseconds }), clipboard)
+        }
+    DisposableEffect(secrets) { onDispose { secrets.clear() } }
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
     val destinations = Destination.entries
     val items = destinations.map { VmNavItem(label = destinationLabel(it), icon = it.icon) }
@@ -124,6 +151,8 @@ private fun AppShell(
                     controller,
                     deviceKeys,
                     model,
+                    secrets,
+                    settings,
                     back,
                     Modifier.weight(1f),
                 )
@@ -135,6 +164,8 @@ private fun AppShell(
                     controller,
                     deviceKeys,
                     model,
+                    secrets,
+                    settings,
                     back,
                     Modifier.weight(1f),
                 )
@@ -150,6 +181,8 @@ private fun DestinationContent(
     controller: VaultController,
     deviceKeys: DeviceKeyProvider?,
     model: PeopleModel,
+    secrets: SecretsModel,
+    settings: AppSettingsHolder,
     back: BackDispatcher,
     modifier: Modifier = Modifier,
 ) {
@@ -157,6 +190,9 @@ private fun DestinationContent(
         Column(modifier) {
             PeopleHost(
                 model = model,
+                secrets = secrets,
+                controller = controller,
+                deviceKeys = deviceKeys,
                 personal = destination == Destination.Personal,
                 back = back,
                 onLock = controller::lock,
@@ -177,7 +213,7 @@ private fun DestinationContent(
             },
         )
         if (destination == Destination.Settings) {
-            SettingsScreen(controller, deviceKeys)
+            SettingsScreen(controller, deviceKeys, settings)
         } else {
             VmEmptyState(
                 title = stringResource(Res.string.placeholder_title),

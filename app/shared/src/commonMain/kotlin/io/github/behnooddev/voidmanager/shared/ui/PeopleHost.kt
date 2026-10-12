@@ -10,6 +10,9 @@ import androidx.compose.runtime.setValue
 import io.github.behnooddev.voidmanager.shared.BackDispatcher
 import io.github.behnooddev.voidmanager.shared.people.PeopleModel
 import io.github.behnooddev.voidmanager.shared.people.PeopleRoute
+import io.github.behnooddev.voidmanager.shared.secrets.SecretsModel
+import io.github.behnooddev.voidmanager.shared.vault.DeviceKeyProvider
+import io.github.behnooddev.voidmanager.shared.vault.VaultController
 
 /**
  * Hosts the People tab, or the Personal tab when [personal] is set. The current route is kept as a
@@ -19,6 +22,9 @@ import io.github.behnooddev.voidmanager.shared.people.PeopleRoute
 @Composable
 internal fun PeopleHost(
     model: PeopleModel,
+    secrets: SecretsModel,
+    controller: VaultController,
+    deviceKeys: DeviceKeyProvider?,
     personal: Boolean,
     back: BackDispatcher,
     onLock: () -> Unit,
@@ -74,6 +80,9 @@ internal fun PeopleHost(
         is PeopleRoute.Profile ->
             ProfileScreen(
                 model = model,
+                secrets = secrets,
+                controller = controller,
+                deviceKeys = deviceKeys,
                 entityId = route.entityId,
                 isSelf = personal,
                 onBack = if (route == root) null else ::goBack,
@@ -82,6 +91,7 @@ internal fun PeopleHost(
                 onEditField = { navigate(PeopleRoute.FieldEditor(route.entityId, it)) },
                 onTrashed = ::goBack,
                 onLock = onLock,
+                onActivity = onActivity,
             )
         is PeopleRoute.Rename -> RenameScreen(model, route.entityId, onDone = ::goBack, onActivity = onActivity)
         is PeopleRoute.FieldEditor ->

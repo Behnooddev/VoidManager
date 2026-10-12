@@ -50,7 +50,12 @@ data class FieldValueInput(
     val sharingPolicy: SharingPolicy = SharingPolicy.Inherit,
     val metadata: String? = null,
     val parts: Map<String, String> = emptyMap(),
-)
+) {
+    /** Prints no text at all: this type holds plain values, so a stray log line must not be able to leak them. */
+    override fun toString(): String =
+        "FieldValueInput(definitionId=$definitionId, value=${if (value == null) "none" else FieldText.MASK}, " +
+            "note=${if (note == null) "none" else FieldText.MASK}, parts=${parts.keys}, isPrimary=$isPrimary)"
+}
 
 data class Relationship(
     val id: String,

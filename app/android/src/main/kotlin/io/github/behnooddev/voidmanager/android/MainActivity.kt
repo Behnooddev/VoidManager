@@ -42,7 +42,10 @@ class MainActivity : FragmentActivity() {
         )
         super.onCreate(savedInstanceState)
         onBackPressedDispatcher.addCallback(this, backCallback)
-        setContent { App(controller, deviceKeys, backDispatcher) }
+        setContent {
+            val app = application as VoidManagerApp
+            App(controller, deviceKeys, backDispatcher, clipboard = app.clipboard, settings = app.settings)
+        }
     }
 
     override fun onStart() {

@@ -65,6 +65,18 @@ class VaultFlow(
         handle(gateway.unlock(password))
     }
 
+    /**
+     * Checks the master password again while unlocked, before a level 3 value is shown. Wrong
+     * attempts count toward the same wait as wrong passwords at unlock. The caller wipes [password].
+     */
+    fun verifyPassword(password: CharArray): Boolean {
+        if (stage !is Stage.Unlocked) return false
+        if (throttle.remainingMillis() > 0) return false
+        val correct = gateway.verifyPassword(password)
+        if (correct) throttle.recordSuccess() else throttle.recordFailure()
+        return correct
+    }
+
     fun deviceUnlockEnabled(): Boolean = gateway.deviceUnlockEnabled()
 
     /** Does nothing unless the stage is [Stage.Locked]. The caller wipes [deviceKey]. Wrong attempts are not throttled: the system limits biometric tries. */

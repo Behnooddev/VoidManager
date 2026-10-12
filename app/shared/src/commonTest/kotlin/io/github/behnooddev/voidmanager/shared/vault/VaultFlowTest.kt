@@ -44,6 +44,14 @@ private class FakeGateway(
 
     override fun exists() = vaultExists
 
+    var passwordOk = true
+    var verifyCalls = 0
+
+    override fun verifyPassword(password: CharArray): Boolean {
+        verifyCalls++
+        return passwordOk
+    }
+
     override fun deviceUnlockEnabled() = deviceEnabled
 
     override fun unlockWithDeviceKey(deviceKey: ByteArray): OpenOutcome = deviceResult
@@ -284,5 +292,23 @@ class VaultFlowTest {
 
         gateway.vault.enableResult = false
         assertTrue(!flow.enableDeviceUnlock(deviceKey))
+    }
+
+    @Test
+    fun theMasterPasswordCanBeCheckedWhileUnlockedAndFailuresAreThrottled() {
+        val gateway = FakeGateway(vaultExists = false)
+        val flow = flow(gateway)
+        assertTrue(!flow.verifyPassword(password), "not while locked or in setup")
+        assertEquals(0, gateway.verifyCalls)
+
+        flow.create(password)
+        assertTrue(flow.verifyPassword(password))
+
+        gateway.passwordOk = false
+        repeat(5) { assertTrue(!flow.verifyPassword(password)) }
+        assertEquals(5_000L, flow.throttleRemainingMillis())
+        val calls = gateway.verifyCalls
+        assertTrue(!flow.verifyPassword(password))
+        assertEquals(calls, gateway.verifyCalls, "the gateway is not asked during the wait")
     }
 }

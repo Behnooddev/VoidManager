@@ -167,4 +167,24 @@
   <string name="part_degree">Degree</string>
   <string name="part_start_date">Start date</string>
   <string name="part_end_date">End date</string>
+
+  <string name="reauth_title">Confirm it is you</string>
+  <string name="reauth_message">This value is protected. Enter your master password or use biometrics to continue.</string>
+  <string name="reauth_confirm">Confirm</string>
+  <string name="reauth_biometric">Use biometrics</string>
+  <string name="reauth_wrong">That did not match. Try again.</string>
+  <string name="keep_current">%1$s (leave empty to keep)</string>
+
+  <string name="copy_action">Copy</string>
+  <string name="copied_cleared">Copied. The clipboard will be cleared in %1$d seconds.</string>
+  <string name="copied_plain">Copied.</string>
+  <string name="copy_failed">Could not copy to the clipboard.</string>
+
+  <string name="settings_idle_title">Lock after inactivity</string>
+  <string name="settings_reveal_title">Hide a shown value after</string>
+  <string name="settings_clipboard_title">Clear the clipboard after</string>
+  <string name="settings_reauth_title">Ask again for protected values after</string>
+  <string name="settings_seconds">%1$d s</string>
+  <string name="settings_minutes">%1$d min</string>
+  <string name="settings_clipboard_note">The clipboard is cleared while the app is running. If the app is closed before the time is up, the copied text stays on the clipboard.</string>
 </resources>

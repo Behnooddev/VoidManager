@@ -7,12 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmButton
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmButtonStyle
@@ -20,10 +17,16 @@ import io.github.behnooddev.voidmanager.core.designsystem.components.VmSectionHe
 import io.github.behnooddev.voidmanager.core.designsystem.components.VmSurface
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmSpacing
 import io.github.behnooddev.voidmanager.core.designsystem.theme.VmTheme
+import io.github.behnooddev.voidmanager.core.model.FieldText
+import io.github.behnooddev.voidmanager.core.model.Sensitivity
 import io.github.behnooddev.voidmanager.shared.people.PeopleModel
 import io.github.behnooddev.voidmanager.shared.people.ProfileRow
 import io.github.behnooddev.voidmanager.shared.resources.Res
 import io.github.behnooddev.voidmanager.shared.resources.action_lock
+import io.github.behnooddev.voidmanager.shared.resources.copied_cleared
+import io.github.behnooddev.voidmanager.shared.resources.copied_plain
+import io.github.behnooddev.voidmanager.shared.resources.copy_action
+import io.github.behnooddev.voidmanager.shared.resources.copy_failed
 import io.github.behnooddev.voidmanager.shared.resources.loading
 import io.github.behnooddev.voidmanager.shared.resources.profile_add_field
 import io.github.behnooddev.voidmanager.shared.resources.profile_edit
@@ -38,15 +41,24 @@ import io.github.behnooddev.voidmanager.shared.resources.profile_primary
 import io.github.behnooddev.voidmanager.shared.resources.profile_rename
 import io.github.behnooddev.voidmanager.shared.resources.profile_show
 import io.github.behnooddev.voidmanager.shared.resources.profile_unfavorite
+import io.github.behnooddev.voidmanager.shared.secrets.CopyNotice
+import io.github.behnooddev.voidmanager.shared.secrets.SecretsModel
+import io.github.behnooddev.voidmanager.shared.vault.DeviceKeyProvider
+import io.github.behnooddev.voidmanager.shared.vault.VaultController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 private const val HIDDEN_VALUE = "••••••••"
+private const val TICK_MILLIS = 1_000L
 
 /** A person's profile, or the Personal profile when [isSelf] is set (which cannot be trashed). */
 @Composable
 internal fun ProfileScreen(
     model: PeopleModel,
+    secrets: SecretsModel,
+    controller: VaultController,
+    deviceKeys: DeviceKeyProvider?,
     entityId: String,
     isSelf: Boolean,
     onBack: (() -> Unit)?,
@@ -55,14 +67,21 @@ internal fun ProfileScreen(
     onEditField: (String) -> Unit,
     onTrashed: () -> Unit,
     onLock: () -> Unit,
+    onActivity: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(entityId) { model.loadProfile(entityId) }
     // The model holds one profile at a time, so make sure it is the one this screen asked for.
     val view = model.profile?.takeIf { it.entity.id == entityId }
 
-    // Plain remember: which protected values are shown is forgotten when the screen or the vault goes away.
-    var revealed by remember { mutableStateOf(emptySet<String>()) }
+    // A shown value hides itself after the reveal time, and when this screen goes away.
+    LaunchedEffect(secrets) {
+        while (true) {
+            delay(TICK_MILLIS)
+            secrets.tick()
+        }
+    }
+    DisposableEffect(secrets) { onDispose { secrets.hideAll() } }
 
     ScreenFrame(
         model = model,
@@ -78,21 +97,36 @@ internal fun ProfileScreen(
         }
         val entity = view.entity
 
-        Row(horizontalArrangement = Arrangement.spacedBy(VmSpacing.sm)) {
-            VmButton(
-                text =
-                    stringResource(
-                        if (entity.isFavorite) Res.string.profile_unfavorite else Res.string.profile_favorite,
-                    ),
-                onClick = { scope.launch { model.setFavorite(entity.id, !entity.isFavorite) } },
-                style = VmButtonStyle.Secondary,
-            )
-            VmButton(
-                text = stringResource(Res.string.profile_rename),
-                onClick = onRename,
-                style = VmButtonStyle.Secondary,
-            )
+        if (secrets.needsReauth) ReauthPrompt(secrets, controller, deviceKeys, onActivity)
+        when (val notice = secrets.notice) {
+            is CopyNotice.Copied ->
+                StatusText(
+                    if (notice.clearAfterSeconds != null) {
+                        stringResource(Res.string.copied_cleared, notice.clearAfterSeconds)
+                    } else {
+                        stringResource(Res.string.copied_plain)
+                    },
+                    VmTheme.colors.textSecondary,
+                )
+            CopyNotice.Failed -> StatusText(stringResource(Res.string.copy_failed), VmTheme.colors.danger)
+            null -> Unit
         }
+
+        VmButton(
+            text =
+                stringResource(
+                    if (entity.isFavorite) Res.string.profile_unfavorite else Res.string.profile_favorite,
+                ),
+            onClick = { scope.launch { model.setFavorite(entity.id, !entity.isFavorite) } },
+            modifier = Modifier.fillMaxWidth(),
+            style = VmButtonStyle.Secondary,
+        )
+        VmButton(
+            text = stringResource(Res.string.profile_rename),
+            onClick = onRename,
+            modifier = Modifier.fillMaxWidth(),
+            style = VmButtonStyle.Secondary,
+        )
 
         if (view.isEmpty) BodyText(stringResource(Res.string.profile_empty))
 
@@ -101,11 +135,7 @@ internal fun ProfileScreen(
             for (row in section.rows) {
                 ProfileRowCard(
                     row = row,
-                    shown = row.valueId in revealed,
-                    onToggle = {
-                        revealed =
-                            if (row.valueId in revealed) revealed - row.valueId else revealed + row.valueId
-                    },
+                    secrets = secrets,
                     onEdit = { onEditField(row.valueId) },
                     onMakePrimary =
                         if (!row.isPrimary &&
@@ -141,8 +171,7 @@ internal fun ProfileScreen(
 @Composable
 private fun ProfileRowCard(
     row: ProfileRow,
-    shown: Boolean,
-    onToggle: () -> Unit,
+    secrets: SecretsModel,
     onEdit: () -> Unit,
     onMakePrimary: (() -> Unit)?,
 ) {
@@ -150,7 +179,7 @@ private fun ProfileRowCard(
     VmSurface(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(VmSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(VmSpacing.xs),
+            verticalArrangement = Arrangement.spacedBy(VmSpacing.sm),
         ) {
             BasicText(
                 text = if (row.isPrimary) "$title · ${stringResource(Res.string.profile_primary)}" else title,
@@ -158,34 +187,30 @@ private fun ProfileRowCard(
             )
             val value = row.text
             if (value != null) {
-                BasicText(
-                    text = if (value.isProtected && !shown) HIDDEN_VALUE else value.reveal(),
-                    style = VmTheme.typography.body.copy(color = VmTheme.colors.textPrimary),
-                )
+                SecretLine(null, value, row.sensitivity, key = row.valueId, secrets = secrets, emphasis = true)
             }
             for (part in row.parts) {
-                BasicText(
-                    text = "${partLabel(
-                        part.key,
-                    )}: ${if (part.text.isProtected && !shown) HIDDEN_VALUE else part.text.reveal()}",
-                    style = VmTheme.typography.body.copy(color = VmTheme.colors.textPrimary),
+                SecretLine(
+                    partLabel(part.key),
+                    part.text,
+                    part.sensitivity,
+                    key = "${row.valueId}:${part.key}",
+                    secrets = secrets,
+                    emphasis = true,
                 )
             }
             val note = row.note
             if (note != null) {
-                BasicText(
-                    text = if (note.isProtected && !shown) HIDDEN_VALUE else note.reveal(),
-                    style = VmTheme.typography.caption.copy(color = VmTheme.colors.textSecondary),
+                SecretLine(
+                    null,
+                    note,
+                    row.sensitivity,
+                    key = "${row.valueId}#note",
+                    secrets = secrets,
+                    emphasis = false,
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(VmSpacing.sm)) {
-                if (row.isProtected) {
-                    VmButton(
-                        text = stringResource(if (shown) Res.string.profile_hide else Res.string.profile_show),
-                        onClick = onToggle,
-                        style = VmButtonStyle.Text,
-                    )
-                }
                 if (row.canEdit) {
                     VmButton(
                         text = stringResource(Res.string.profile_edit),
@@ -197,6 +222,52 @@ private fun ProfileRowCard(
                     VmButton(
                         text = stringResource(Res.string.profile_make_primary),
                         onClick = onMakePrimary,
+                        style = VmButtonStyle.Text,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One line of a value, with Show and Hide for protected text and Copy. A protected line stays
+ * masked until it is shown on purpose, and a level 3 line asks for re-authentication first.
+ */
+@Composable
+private fun SecretLine(
+    label: String?,
+    text: FieldText,
+    sensitivity: Sensitivity,
+    key: String,
+    secrets: SecretsModel,
+    emphasis: Boolean,
+) {
+    val shown = !text.isProtected || secrets.isRevealed(key)
+    val shownText = if (shown) text.reveal() else HIDDEN_VALUE
+    val style =
+        if (emphasis) {
+            VmTheme.typography.body.copy(
+                color = VmTheme.colors.textPrimary,
+            )
+        } else {
+            VmTheme.typography.caption.copy(color = VmTheme.colors.textSecondary)
+        }
+    Column(verticalArrangement = Arrangement.spacedBy(VmSpacing.xs)) {
+        BasicText(text = if (label != null) "$label: $shownText" else shownText, style = style)
+        if (text.isProtected || secrets.canCopy) {
+            Row(horizontalArrangement = Arrangement.spacedBy(VmSpacing.sm)) {
+                if (text.isProtected) {
+                    VmButton(
+                        text = stringResource(if (shown) Res.string.profile_hide else Res.string.profile_show),
+                        onClick = { secrets.toggleReveal(key, sensitivity) },
+                        style = VmButtonStyle.Text,
+                    )
+                }
+                if (secrets.canCopy) {
+                    VmButton(
+                        text = stringResource(Res.string.copy_action),
+                        onClick = { secrets.copy(text.reveal(), sensitivity, text.isProtected) },
                         style = VmButtonStyle.Text,
                     )
                 }

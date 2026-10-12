@@ -14,6 +14,12 @@ interface VaultGateway {
 
     fun unlock(password: CharArray): OpenOutcome
 
+    /**
+     * Checks a password against the key file without opening the database, for a re-authentication
+     * before a level 3 value is shown. Takes as long as an unlock. The caller overwrites [password].
+     */
+    fun verifyPassword(password: CharArray): Boolean
+
     /** True when the key file holds a device-key slot. Says nothing about whether the platform still holds the key. */
     fun deviceUnlockEnabled(): Boolean
 

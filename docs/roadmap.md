@@ -16,7 +16,7 @@ Each phase ends with a report stating, per feature, whether it is designed, scaf
 | 3b-2 | People, Personal, Quick Add and detailed profile, trash screens (0.5.0) | Create, edit, trash, restore and purge flows tested against the model; screens verified on a device |
 | 4a | Composite value editing, primary value choice (0.6.0) | Part validation and composite saves tested; screens verified on a device |
 | 4b | Custom fields, hiding and renaming built-in fields, raising a value's protection level | Field registry overrides and custom types tested |
-| 5 | Password manager, sensitivity enforcement, clipboard and reveal handling | Level 3 handling tests, threat model review complete |
+| 5 | Password manager, sensitivity enforcement, clipboard and reveal handling (0.7.0) | Level 3 handling tests pass; clipboard behavior verified on a device; threat model review complete |
 | 6 | Search, relationships, smart actions | Search normalization tests, reciprocal relationship tests |
 | 7 | Export (CSV, XLSX, PDF), import, encrypted backup and restore | Backup fixtures restored in CI, export field selection tested |
 | 8 | Sharing: package, session, QR and Nearby methods, branded QR, deep link, incoming share, merge | Protocol tests, tamper tests, branded QR validation tests, instrumented deep link tests |

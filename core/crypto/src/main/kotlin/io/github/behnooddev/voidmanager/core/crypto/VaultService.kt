@@ -50,6 +50,15 @@ class VaultService(
             UnlockResult.DeviceUnlockNotEnabled -> OpenOutcome.WrongPasswordOrCorrupt
         }
 
+    override fun verifyPassword(password: CharArray): Boolean =
+        when (val result = manager.unlock(password)) {
+            is UnlockResult.Unlocked -> {
+                result.session.lock()
+                true
+            }
+            else -> false
+        }
+
     override fun deviceUnlockEnabled(): Boolean = manager.deviceUnlockEnabled()
 
     override fun unlockWithDeviceKey(deviceKey: ByteArray): OpenOutcome =

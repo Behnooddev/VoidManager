@@ -4,6 +4,39 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-10
+
+Phase 5: reveal rules, re-authentication for level 3 values, clipboard handling and timing settings.
+
+### Added
+
+- Show and Hide on every protected line of a profile (value, part or note), one value shown at a time. A shown value hides itself after the reveal time and when the screen is left or the vault locks.
+- Re-authentication for level 3 values (account password and recovery data, card CVV2 and PIN): showing or copying one asks for the master password or biometrics unless the user authenticated within the re-authentication window. Wrong passwords count toward the same wait as at unlock.
+- Copy on every value, on an explicit tap only. Protected values are copied as sensitive (Android 13 and later keep them out of the clipboard preview) and the clipboard is cleared after a delay if it still holds that copy. The screen says that the text was copied and when it will be cleared.
+- Settings: lock after inactivity (30 s, 1, 2 or 5 min), hide a shown value after (10, 20, 30 or 60 s), clear the clipboard after (15, 30, 60 or 120 s), and ask again for protected values after (30 s, 1 or 5 min). The values are stored outside the vault, so the lock timer applies before unlock too; a damaged value falls back to its default.
+- `VaultGateway.verifyPassword`: checks the master password against the key file without opening the database.
+- `SecretAccess`, `SecretsModel`, `SecretClipboard`, `AppSettings` and `AppSettingsHolder` in `app:shared`; Android and desktop clipboard and settings stores.
+- 35 new tests: reveal timing, re-authentication window, copy rules, settings, password verification, level 3 handling in the editor, and a check that formatted output of the value types contains no secret.
+
+### Changed
+
+- The editor no longer puts level 3 text on screen: a level 3 field opens empty, and leaving it empty keeps the stored text. Replacing a level 3 value needs no re-authentication; seeing it does.
+- `FieldValueInput` prints no value, note or part text in `toString`, only the part names, so a stray log line cannot leak what was typed.
+- The idle lock time on Android and desktop comes from the settings instead of a fixed 60 seconds. The default is unchanged.
+
+### Not included
+
+- A password generator, autofill and one-time codes are not planned (see `docs/open-decisions.md`).
+- Clipboard clearing does not survive the app being closed before the delay is up.
+- A way to clear a single level 3 part without deleting the whole value.
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: none yet.
+- Share protocol: none yet.
+
 ## [0.6.0] - 2026-10-09
 
 Phase 4a: composite values can be edited, and a field with several values can have its primary one chosen.

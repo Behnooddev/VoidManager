@@ -21,7 +21,7 @@ Status: Proposed. To be reviewed before the security foundation is implemented (
 | Malicious import file (CSV, XLSX, backup) | Size limits, streaming parse, schema validation, no execution, decompression limits | Parser dependencies remain an attack surface and are kept updated |
 | Malicious share package | AEAD integrity, protocol and schema validation, size and count limits, staged in memory, nothing imported without confirmation, no automatic opening of links | Sender identity is self-asserted unless signing is adopted |
 | Interception of a share QR or deep link | QR holds only ephemeral public material, a single-use token and a transport descriptor; sender approves the connecting device; short expiry | Another app registered for the same custom scheme can see the QR contents; approval and confirmation code limit the impact |
-| Clipboard exposure | Explicit copy, sensitive flag, timed clear | Other apps or clipboard managers can read the clipboard on older Android versions |
+| Clipboard exposure | Explicit copy, sensitive flag, timed clear that checks the copy is still ours | Other apps or clipboard managers can read the clipboard on older Android versions; the clear does not run if the app is closed before the delay is up |
 | Screenshot or screen recording | Secure window flag on sensitive screens | The flag does not stop a camera pointed at the screen |
 | Logs and crash reports | Masked types, no telemetry, no crash upload, lint rule against direct logging | Developer builds may log more; they are not distributed |
 | Formula injection through exported cells | Cells starting with `=`, `+`, `-`, `@` are neutralized in CSV and XLSX | Behavior in third-party spreadsheet software varies |

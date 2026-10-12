@@ -1,6 +1,7 @@
 package io.github.behnooddev.voidmanager.shared.people
 
 import io.github.behnooddev.voidmanager.core.model.FieldDefinition
+import io.github.behnooddev.voidmanager.core.model.Sensitivity
 
 /**
  * Rules for the parts of a composite value (address, account, card, work, education).
@@ -50,6 +51,24 @@ object CompositeInput {
             for (part in definition.parts) {
                 val text = parts[part.key].orEmpty().trim()
                 if (text.isNotEmpty()) put(part.key, text)
+            }
+        }
+
+    /**
+     * The parts to store when a value is edited. The text of a level 3 part is never shown in the
+     * editor, so a blank level 3 part keeps the stored text instead of clearing it.
+     */
+    fun merged(
+        definition: FieldDefinition,
+        typed: Map<String, String>,
+        existing: Map<String, String>,
+    ): Map<String, String> =
+        buildMap {
+            for (part in definition.parts) {
+                val text = typed[part.key].orEmpty().trim()
+                val kept = if (part.sensitivity == Sensitivity.Secret) existing[part.key].orEmpty() else ""
+                val chosen = text.ifEmpty { kept }
+                if (chosen.isNotEmpty()) put(part.key, chosen)
             }
         }
 

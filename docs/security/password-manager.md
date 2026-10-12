@@ -1,6 +1,6 @@
 # Password manager
 
-Status: Proposed.
+Status: Proposed. The reveal, re-authentication, clipboard and secure-window rules below are implemented as of 0.7.0, except where a section says otherwise. Sharing and export rules belong to later phases.
 
 ## Scope
 
@@ -25,6 +25,15 @@ The password manager is the `account` field type plus the secret-handling rules 
 - Android: sensitive flag on API 33 and above; clear after timeout on API 28 and above; the user sees a message that a secret was copied and when it will be cleared.
 - Desktop: clear after timeout when the clipboard content is still the copied value.
 - Clipboard content is never logged.
+
+## Implementation notes (0.7.0)
+
+- Showing and copying go through `SecretAccess` (`app:shared`): level 2 needs an unlocked vault, level 3 also needs `ReAuthWindow` to be fresh. The window, the reveal time and the clipboard delay are settings (`AppSettings`).
+- Re-authentication is the master password, checked with `VaultGateway.verifyPassword` (same cost as an unlock, wrong attempts share the unlock wait), or the biometric prompt when device unlock is on.
+- The editor never displays level 3 text. A level 3 field opens empty and an empty field keeps the stored text, so no re-authentication is needed to replace a value and none is skipped to see one.
+- Android: the sensitive flag is set on API 33 and above. After the delay the clipboard is cleared only if its label is the one this copy set, because the text cannot be read from the background. Clearing runs only while the process is alive; if the app is closed first, the text stays. The settings screen says so. API levels below 28 clear by overwriting the clipboard with an empty clip.
+- Desktop: after the delay the clipboard is cleared if it still holds the copied text.
+- Lists, search results and previews carry no level 3 text; `FieldText` prints a mask and `FieldValueInput` prints no text, and `LoggingTest` asserts both.
 
 ## Screens
 
