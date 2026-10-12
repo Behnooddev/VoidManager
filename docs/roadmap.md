@@ -18,7 +18,9 @@ Each phase ends with a report stating, per feature, whether it is designed, scaf
 | 4b | Custom fields, hiding and renaming built-in fields, raising a value's protection level (0.8.0) | Registry overrides and custom fields tested; screens verified on a device |
 | 5 | Password manager, sensitivity enforcement, clipboard and reveal handling (0.7.0) | Level 3 handling tests pass; clipboard behavior verified on a device; threat model review complete |
 | 6 | Search, relationships, smart actions | Search normalization tests, reciprocal relationship tests |
-| 7 | Export (CSV, XLSX, PDF), import, encrypted backup and restore | Backup fixtures restored in CI, export field selection tested |
+| 7a | Encrypted backup container, key derivation and logical payload (0.9.0) | Format tests pass, including tampering and limits |
+| 7b | Export the vault to a backup, restore into an empty vault, backup and restore screens, file picker | Backup fixtures restored in CI |
+| 7c | Export (CSV, XLSX, PDF) and import | Export field selection tested |
 | 8 | Sharing: package, session, QR and Nearby methods, branded QR, deep link, incoming share, merge | Protocol tests, tamper tests, branded QR validation tests, instrumented deep link tests |
 | 9 | Polish, accessibility, performance | Accessibility checks, performance budgets met on a reference device |
 | 10 | CI/CD completion, release process, documentation, website | Reproducible release, documentation complete |

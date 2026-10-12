@@ -40,13 +40,13 @@ jobs:
         run: >
           ./gradlew --continue
           :core:common:jvmTest :core:model:jvmTest :core:data:jvmTest :core:database:jvmTest
-          :core:security:jvmTest :core:crypto:test :app:shared:jvmTest
+          :core:security:jvmTest :core:crypto:test :core:backup:test :app:shared:jvmTest
       - name: Build shared modules
         if: ${{ !cancelled() }}
         run: >
           ./gradlew --continue
           :core:model:assemble :core:database:assemble :core:data:assemble
-          :core:security:assemble :core:crypto:assemble
+          :core:security:assemble :core:crypto:assemble :core:backup:assemble
       - name: Android debug build and lint
         if: ${{ !cancelled() }}
         run: ./gradlew --continue :app:android:assembleDebug :app:android:lintDebug
@@ -92,7 +92,7 @@ jobs:
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
       - name: Encrypted database, repository and key hierarchy tests
-        run: ./gradlew --continue :core:database:jvmTest :core:data:jvmTest :core:crypto:test
+        run: ./gradlew --continue :core:database:jvmTest :core:data:jvmTest :core:crypto:test :core:backup:test
 
   dependency-review:
     if: github.event_name == 'pull_request'

@@ -4,6 +4,32 @@ All notable changes are recorded here. The format follows Keep a Changelog and v
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-12
+
+Phase 7a: the encrypted backup format. This release adds the format and its cryptography as a separate module; reading the database into a backup, restoring one, and the screens come next (7b).
+
+### Added
+
+- `core:backup` module: the `.vmbk` container (`BackupService.create`, `open`, `inspect`) with Argon2id key derivation, HKDF-SHA256, chunked AES-256-GCM, a password check value, and the `logical-v1` payload (ZIP with a manifest, four JSON Lines tables and SHA-256 per table).
+- The outcome of opening a backup says which of these happened: wrong password or changed header, damaged or cut-short file, not a backup, a newer format, too large, or content that fails validation.
+- Limits while reading: 256 MiB per file, 128 MiB per archive entry, 256 MiB after decompression, 16 files, and the vault's own key-cost limits checked before any key is derived.
+- `Argon2idBackupKdf` in `core:crypto`, and `BackupWithArgon2idTest`, which runs a backup through the real key derivation.
+- `MiniJson`, a small JSON reader and writer for integers, text, booleans, lists and objects, with canonical output.
+- 47 tests in `core:backup`, including the RFC 5869 HKDF test vector, truncation at chunk boundaries, reordered, repeated and changed chunks, header tampering, hostile key costs, a compression bomb, and a check that the file contains none of the stored text.
+
+### Not included
+
+- Reading the vault into a backup and restoring a backup into a vault, the screens, and the file picker (7b).
+- Export to CSV, XLSX and PDF, and import (7c).
+- Tags, groups and media in the payload.
+
+### Compatibility
+
+- Database schema: 1.
+- Key file format: 1.
+- Backup format: 1 (draft, first implementation).
+- Share protocol: none yet.
+
 ## [0.8.0] - 2026-10-11
 
 Phase 4b: field customization and per-value protection level.

@@ -1,6 +1,6 @@
 # Encrypted backup format
 
-Status: Proposed. Backup format version 1 is a draft.
+Status: Proposed. Backup format version 1 is a draft. The container, the encryption and the payload described below are implemented and tested in `core:backup` (0.9.0). Reading and writing the database, the screens and the file picker are not yet; see the implementation notes.
 
 ## File extension
 
@@ -41,6 +41,18 @@ A logical export was chosen over copying the database file because it can be val
 ## Keys
 
 The backup key is derived from a backup password with Argon2id. It is independent from the master password and from the vault key. The user can choose the same password, but the app does not assume it. Level 2 and 3 values are exported in decrypted form inside the backup payload and protected only by the backup key; they are never written in the clear outside it.
+
+## Implementation notes (0.9.0)
+
+- `BackupService.create` and `open` work on byte arrays in memory. A backup is limited to 256 MiB, and the payload to 128 MiB per file and 256 MiB in total after decompression. Streaming to and from files is a later change, needed when media is added.
+- Header: canonical JSON with sorted keys. The format version is also in the fixed prefix so that a newer file is recognized before the header is parsed. `check` is a small AES-GCM value sealed under a key derived from the backup key; it lets the reader say "wrong password or the header was changed" separately from "damaged file".
+- Keys: Argon2id over the NFKC-normalized backup password gives a 32-byte key. HKDF-SHA256 with a random 32-byte salt from the header derives three independent values: the check key, the stream key and a 7-byte nonce prefix. The salt is unique per file, so a nonce is never reused under a key.
+- Chunks are 64 KiB. Each chunk's nonce is the prefix, a 32-bit counter and a last-chunk flag, and the whole header bytes are associated data of every chunk. Cutting chunks off, adding, repeating or reordering them, and changing any header byte all fail authentication.
+- The key cost in the header is checked against the same limits as the vault key file (19 to 512 MiB, 2 to 10 iterations) before any derivation, so a hostile file cannot make the app allocate gigabytes.
+- Payload: a ZIP archive with `manifest.json` and four JSON Lines tables (`definitions`, `entities`, `values`, `relationships`). The manifest holds each table's row count and SHA-256. The reader accepts exactly those five files, rejects names with a path or dots, and stops at the size and file-count limits while decompressing.
+- Records are validated on read (types, protection levels, entity kinds, duplicate parts); a file that decrypts but fails validation is reported as invalid and nothing is restored.
+- Not in this version: tags, groups and media (the app has no screens for them yet; the manifest and `payload_version` allow adding tables), restore into a vault that already has data (replace and merge), and a safety snapshot before a restore.
+- The file extension is still a working name; see above.
 
 ## Restore
 

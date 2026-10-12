@@ -17,6 +17,7 @@ kotlin {
 
 dependencies {
     api(project(":core:data"))
+    api(project(":core:backup"))
     implementation(libs.bouncycastle)
     testImplementation(kotlin("test"))
 }
